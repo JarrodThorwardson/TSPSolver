@@ -6,7 +6,6 @@ public class LexPermsOriginal {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		LexPermsOriginal main = new LexPermsOriginal();
 		int[] array = {};
 		int[] expansionArray;
 		Scanner sc = new Scanner(System.in);
@@ -34,6 +33,8 @@ public class LexPermsOriginal {
 			} else {
 				endPermutes();
 			}
+
+			sc.close();
 		}
 	}
 

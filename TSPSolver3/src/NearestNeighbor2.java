@@ -5,12 +5,12 @@ public class NearestNeighbor2 {
 	
 	
 	public int oldNearestNeighborRun(int[][] matrix){
-		Stack stack = new Stack<Integer>();
+		Stack<Integer> stack = new Stack<Integer>();
 		int lowest = Integer.MAX_VALUE, pathLength = 0, lastPlace = 0;
 		int min  = Integer.MAX_VALUE;
 		int arrayLength = matrix[0].length;
 		System.out.println("number of nodes: " + arrayLength);
-		int[] bestPathHolder = new int[arrayLength], bestPath = new int[arrayLength];
+		int[] bestPathHolder = new int[arrayLength];
 
 		for (int k = 0; k < arrayLength; k++) {
 			bestPathHolder[0] = k;
@@ -62,7 +62,6 @@ public class NearestNeighbor2 {
 			// pathLength);
 			if (pathLength <= lowest) {
 				lowest = pathLength;
-				bestPath = bestPathHolder;
 			}
 
 		}
