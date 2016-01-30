@@ -1,3 +1,4 @@
+package edu.mansfield.algorithms.tsp;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;

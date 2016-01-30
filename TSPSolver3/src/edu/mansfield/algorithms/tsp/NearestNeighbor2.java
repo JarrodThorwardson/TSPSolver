@@ -1,3 +1,5 @@
+package edu.mansfield.algorithms.tsp;
+
 import java.util.Stack;
 
 

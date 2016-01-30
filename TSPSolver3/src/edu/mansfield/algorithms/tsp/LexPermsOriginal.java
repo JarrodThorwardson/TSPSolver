@@ -1,4 +1,6 @@
+package edu.mansfield.algorithms.tsp;
 import java.util.Scanner;
+
 
 public class LexPermsOriginal {
 
