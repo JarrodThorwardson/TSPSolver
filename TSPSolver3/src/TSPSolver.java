@@ -2,14 +2,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class TSPSolver {
 	static int[] currentPermute;
+	static long time;
+	static long runTime;
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp = new TSPSolver();
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		String matrixString = tsp.fileReadIn();
+		time = System.currentTimeMillis();
 		int[][] matrix = tsp.StringToIntMatrix(matrixString);
 		int lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
 		long possiblePermutes = (factorial(matrix.length - 1)/2);
@@ -33,8 +37,19 @@ public class TSPSolver {
 	//		System.out.println("\tDistance:\t" + currentValue);
 			currentPermute = tsp.getLexes(currentPermute);
 		}
+		runTime = System.currentTimeMillis() - time;
 		
 		System.out.println("Best path:\t" + tsp.MatrixLineToString(bestArray) + "\tBest Distance:\t" + bestValue);
+		System.out.println("Run time in milliseconds: " + runTime);
+		
+		// Time formatting code taken from http://stackoverflow.com/questions/9027317/how-to-convert-milliseconds-to-hhmmss-format
+		System.out.println("hh:mm:ss" + 
+				String.format("%02d:%02d:%02d", 
+					    TimeUnit.MILLISECONDS.toHours(runTime),
+					    TimeUnit.MILLISECONDS.toMinutes(runTime) - 
+					    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(runTime)),
+					    TimeUnit.MILLISECONDS.toSeconds(runTime) - 
+					    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime))));
 		
 	}
 	
