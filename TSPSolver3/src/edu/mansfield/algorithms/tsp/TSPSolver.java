@@ -42,9 +42,8 @@ public class TSPSolver {
 		
 		int[] bestArray = currentPermute.clone();
 		int bestValue = Integer.MAX_VALUE;
-		//int currentValue = 0;
-		
 		/*
+		int currentValue = 0;
 		for (long i = 0; i < possiblePermutes; i++) {
 			currentValue = tsp.getPermuteValue(currentPermute, matrix, lowEstimate);
 			if(currentValue <= bestValue){
@@ -60,7 +59,7 @@ public class TSPSolver {
 		
 		//proof that these methods work, hopefully they can still work when opening several threads
 		bestArray = tsp.threadablePermuteFinding(bestArray, possiblePermutes, lowEstimate).clone();
-		bestValue =tsp.threadablePermuteValue(bestArray, matrix);
+		bestValue = tsp.threadablePermuteValue(bestArray, matrix);
 		
 		runTime = System.currentTimeMillis() - time;
 		
@@ -90,7 +89,7 @@ public class TSPSolver {
 		int currentValue = 0;
 		
 		for (long i = 0; i < loops; i++) {
-			initial = tsp1.threadablePermuteBranchBound(initial, matrix, estimate).clone();
+			initial = tsp1.threadablePermuteBranchBound(initial, matrix, estimate);
 			currentValue = tsp1.threadablePermuteValue(initial, matrix);
 			if(currentValue <= bestValue){
 				bestArray = initial.clone();
