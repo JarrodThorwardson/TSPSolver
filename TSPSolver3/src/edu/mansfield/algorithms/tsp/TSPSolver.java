@@ -8,24 +8,43 @@ public class TSPSolver {
 	static int[] currentPermute;
 	static long time;
 	static long runTime;
+	static int[][] matrix;
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp = new TSPSolver();
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		String matrixString = tsp.fileReadIn();
 		time = System.currentTimeMillis();
-		int[][] matrix = tsp.StringToIntMatrix(matrixString);
+		matrix = tsp.StringToIntMatrix(matrixString);
 		int lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
+		
+		//possiblePermutes is involved in optimizing based on a symmetrical graph
 		long possiblePermutes = (factorial(matrix.length - 1)/2);
+		
+		//currentPermute is used for tracking which route is being evaluated
 		currentPermute = new int[matrix[0].length];
+		
+		//no need to start more than n/2 threads, assuming symmetric graph
+		//each thread shouldn't have to run more than factorial(matrix.length -2) since index 0 needn't increment
+		/* 012345 = 012345 terminates at: 054321
+		 * 123450 = 102345 terminates at: 154320
+		 * 234501 = 201345 terminates at: 254310
+		 * 345012 = 301245 terminates at: 354210
+		 * 450123 = 401235 terminates at: 453210
+		 * 501234 = 501234 terminates at: 543210
+		 * */
+		
+		
+		//initializing currentPermute with a valid path
 		for(int i = 0; i < currentPermute.length; i++){
 			currentPermute[i] = i;
 		}
+		
 		int[] bestArray = currentPermute.clone();
 		int bestValue = Integer.MAX_VALUE;
-		int currentValue = 0;
+		//int currentValue = 0;
 		
-		
+		/*
 		for (long i = 0; i < possiblePermutes; i++) {
 			currentValue = tsp.getPermuteValue(currentPermute, matrix, lowEstimate);
 			if(currentValue <= bestValue){
@@ -37,6 +56,12 @@ public class TSPSolver {
 	//		System.out.println("\tDistance:\t" + currentValue);
 			currentPermute = tsp.getLexes(currentPermute);
 		}
+		*/
+		
+		//proof that these methods work, hopefully they can still work when opening several threads
+		bestArray = tsp.threadablePermuteFinding(bestArray, possiblePermutes, lowEstimate).clone();
+		bestValue =tsp.threadablePermuteValue(bestArray, matrix);
+		
 		runTime = System.currentTimeMillis() - time;
 		
 		System.out.println("Best path:\t" + tsp.MatrixLineToString(bestArray) + "\tBest Distance:\t" + bestValue);
@@ -53,9 +78,69 @@ public class TSPSolver {
 		
 	}
 	
+	/*
+	 * helper method intended to account for multi-threading requirements.
+	 * Factors out the loop in the main method.
+	 * */
+	
+	public int[] threadablePermuteFinding(int[] initial, long loops, int estimate){
+		TSPSolver tsp1 = new TSPSolver();
+		int[] bestArray = initial.clone();
+		int bestValue = Integer.MAX_VALUE;
+		int currentValue = 0;
+		
+		for (long i = 0; i < loops; i++) {
+			initial = tsp1.threadablePermuteBranchBound(initial, matrix, estimate).clone();
+			currentValue = tsp1.threadablePermuteValue(initial, matrix);
+			if(currentValue <= bestValue){
+				bestArray = initial.clone();
+				bestValue = currentValue;
+				estimate = bestValue;
+			}
+	//		System.out.print(printArray(currentPermute));		
+	//		System.out.println("\tDistance:\t" + currentValue);
+			initial = tsp1.getLexes(initial);
+		}
+		
+		return bestArray;
+	}
+	
+	/*
+	 * helper method which assesses candidate permutation for branch and bound purposes.
+	 * */
+	public int[] threadablePermuteBranchBound(int[] sortable, int[][] matrix, int estimate){
+		int num = 0;
+		
+		for(int i = 0; i < sortable.length - 1; i++){
+			num += matrix[sortable[i]][sortable[i+1]];
+			if(num > estimate){
+				insertionSort(sortable, i);
+				return sortable;
+			}
+		}
+		
+		num += matrix[sortable[sortable.length-1]][sortable[0]];
+		
+		return sortable;
+	}
+	/*
+	 * threadablePermuteValue only assesses the cost of the path, in order to not assume single-threading
+	 * */
+	public int threadablePermuteValue(int[] permute, int[][] matrix){
+		int num = 0;
+		
+		for(int i = 0; i < permute.length - 1; i++){
+			num += matrix[permute[i]][permute[i+1]];
+		}
+		
+		num += matrix[permute[permute.length-1]][permute[0]];
+		
+		return num;
+	}
 	
 	/*
 	 * The getPermuteValue will look at a permutation and return it's value.
+	 * Also, it includes branch-and-bound optimization.  Unfortunately, it also assumes single-thread.
 	 */	
 	public int getPermuteValue(int[] permute, int[][] matrix, int lowEstimate){
 		int num = 0;
