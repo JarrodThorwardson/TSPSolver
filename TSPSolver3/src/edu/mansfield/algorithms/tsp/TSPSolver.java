@@ -24,7 +24,7 @@ public class TSPSolver {
 		lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
 		
 		//possiblePermutes is involved in optimizing based on a symmetrical graph
-		possiblePermutes = (factorial(matrix.length - 1)/2);
+		possiblePermutes = (factorial(matrix[0].length - 1)/2);
 		
 		//currentPermute is used for tracking which route is being evaluated
 		currentPermute = new int[matrix[0].length];
@@ -67,13 +67,13 @@ public class TSPSolver {
 		*/
 		//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
 		swapIndex = bestArray.clone();
-		possiblePermutes = (factorial(matrix.length - 2));
+		possiblePermutes = (factorial(matrix[0].length - 2) / 2);
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 		
 		for (int i=0; i< threadCount; i++) {
 			currentPermute[1] = swapIndex[i+1];
 			currentPermute[i+1] = swapIndex[1];
-			upInsertionSort(currentPermute, 1);
+			bubbleSort(currentPermute, 1);
 			final int[] threadPermute = currentPermute.clone();
 			final int derp = i;
 			Thread aThread = new Thread(new Runnable() {
@@ -163,7 +163,7 @@ public class TSPSolver {
 		for (long i = 0; i < loops; i++) {
 			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
 			currentValue = tsp1.threadablePermuteValue(initial, clonedMatrix);
-			if(currentValue <= bestValue1){
+			if(currentValue < bestValue1){
 				bestArray1 = initial.clone();
 				bestValue1 = currentValue;
 				estimate = bestValue1;
@@ -411,7 +411,7 @@ public class TSPSolver {
 		position++;
 		for(out=a.length-1; out>position; out--)
 			for(in=position; in<out; in++)
-				if(/*a[in] > a[in+1] && direction.equalsIgnoreCase("A") || */a[in] < a[in+1]/* && direction.equalsIgnoreCase("D")*/)
+				if(a[in] > a[in+1] /*&& direction.equalsIgnoreCase("A") || a[in] < a[in+1] && direction.equalsIgnoreCase("D")*/)
 				{
 					int temp = a[in];
 					a[in] = a[in+1];
