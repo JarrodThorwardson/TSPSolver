@@ -1,25 +1,29 @@
 package edu.mansfield.algorithms.tsp;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class TSPSolver {
-	static int[] currentPermute;
-	static long time;
-	static long runTime;
-	static int[][] matrix;
+	static volatile int[] bestArray, swapIndex;
+	static volatile long time;
+	static volatile long runTime;
+	static volatile long possiblePermutes;
+	static volatile int[][] matrix;
+	static volatile int bestValue, threadCount, lowEstimate;
 
 	public static void main(String[] args) throws FileNotFoundException {
-		TSPSolver tsp = new TSPSolver();
+		final TSPSolver tsp = new TSPSolver();
+		int[] currentPermute;
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		String matrixString = tsp.fileReadIn();
 		time = System.currentTimeMillis();
 		matrix = tsp.StringToIntMatrix(matrixString);
-		int lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
+		lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
 		
 		//possiblePermutes is involved in optimizing based on a symmetrical graph
-		long possiblePermutes = (factorial(matrix.length - 1)/2);
+		possiblePermutes = (factorial(matrix.length - 1)/2);
 		
 		//currentPermute is used for tracking which route is being evaluated
 		currentPermute = new int[matrix[0].length];
@@ -40,8 +44,9 @@ public class TSPSolver {
 			currentPermute[i] = i;
 		}
 		
-		int[] bestArray = currentPermute.clone();
-		int bestValue = Integer.MAX_VALUE;
+		bestArray = currentPermute.clone();
+		bestValue = Integer.MAX_VALUE;
+		threadCount = currentPermute.length / 2;
 		/*
 		int currentValue = 0;
 		for (long i = 0; i < possiblePermutes; i++) {
@@ -57,9 +62,62 @@ public class TSPSolver {
 		}
 		*/
 		
+		swapIndex = bestArray.clone();
+		possiblePermutes = (factorial(matrix.length - 2));
+		ArrayList<Thread> threads = new ArrayList<Thread>();
+		for (int i=0; i< threadCount; i++) {
+			final int[] threadPermute = currentPermute.clone();
+			Thread aThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						bestArray = tsp.threadablePermuteFinding(threadPermute, possiblePermutes, lowEstimate).clone();
+						bestValue = tsp.threadablePermuteValue(bestArray, matrix);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}					
+				}
+			});
+
+			// aThread.setPriority(Thread.MAX_PRIORITY);
+			currentPermute[1] = swapIndex[i+1];
+			currentPermute[i+1] = swapIndex[1];
+			insertionSort(currentPermute, 1);
+			System.out.println("Current path:\t" + tsp.MatrixLineToString(currentPermute));
+			aThread.start();
+			threads.add(aThread);
+			
+		}
+
+		boolean threadsAreAlive;
+
+		do {
+			threadsAreAlive = false;
+			for (Thread thread : threads) {
+				// System.out.println(thread.getName()+ ": " +
+				// (thread.isAlive()?" is alive": " is dead"));
+				if (thread.isAlive()) {
+					threadsAreAlive = true;
+				}
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		} while (threadsAreAlive);
+
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		//proof that these methods work, hopefully they can still work when opening several threads
-		bestArray = tsp.threadablePermuteFinding(bestArray, possiblePermutes, lowEstimate).clone();
-		bestValue = tsp.threadablePermuteValue(bestArray, matrix);
+		//bestArray = tsp.threadablePermuteFinding(bestArray, possiblePermutes, lowEstimate).clone();
+		//bestValue = tsp.threadablePermuteValue(bestArray, matrix);
 		
 		runTime = System.currentTimeMillis() - time;
 		
@@ -67,7 +125,7 @@ public class TSPSolver {
 		System.out.println("Run time in milliseconds: " + runTime);
 		
 		// Time formatting code taken from http://stackoverflow.com/questions/9027317/how-to-convert-milliseconds-to-hhmmss-format
-		System.out.println("hh:mm:ss" + 
+		System.out.println("hh:mm:ss " + 
 				String.format("%02d:%02d:%02d", 
 					    TimeUnit.MILLISECONDS.toHours(runTime),
 					    TimeUnit.MILLISECONDS.toMinutes(runTime) - 
@@ -84,24 +142,24 @@ public class TSPSolver {
 	
 	public int[] threadablePermuteFinding(int[] initial, long loops, int estimate){
 		TSPSolver tsp1 = new TSPSolver();
-		int[] bestArray = initial.clone();
-		int bestValue = Integer.MAX_VALUE;
+		int[] bestArray1 = initial.clone();
+		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
 		
 		for (long i = 0; i < loops; i++) {
 			initial = tsp1.threadablePermuteBranchBound(initial, matrix, estimate);
 			currentValue = tsp1.threadablePermuteValue(initial, matrix);
-			if(currentValue <= bestValue){
-				bestArray = initial.clone();
-				bestValue = currentValue;
-				estimate = bestValue;
+			if(currentValue <= bestValue1){
+				bestArray1 = initial.clone();
+				bestValue1 = currentValue;
+				estimate = bestValue1;
 			}
 	//		System.out.print(printArray(currentPermute));		
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
 		}
-		
-		return bestArray;
+		System.out.println("Best path lol:\t" + tsp1.MatrixLineToString(bestArray1) + "\tBest Distance lol:\t" + bestValue1);
+		return bestArray1;
 	}
 	
 	/*
