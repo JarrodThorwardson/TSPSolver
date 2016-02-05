@@ -159,6 +159,7 @@ public class TSPSolver {
 		int[] bestArray1 = initial.clone();
 		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
+		int sentinel = initial[1];
 		
 		for (long i = 0; i < loops; i++) {
 			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
@@ -171,6 +172,9 @@ public class TSPSolver {
 	//		System.out.print(printArray(currentPermute));		
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
+			if (initial[1] != sentinel){
+				return bestArray1;
+			}
 		}
 		System.out.println("Best path lol:\t" + tsp1.MatrixLineToString(bestArray1) + "\tBest Distance lol:\t" + bestValue1);
 		return bestArray1;
