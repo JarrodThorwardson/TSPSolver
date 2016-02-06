@@ -64,15 +64,15 @@ public class TSPSolver {
 			currentPermute[i+1] = swapIndex[1];
 			bubbleSort(currentPermute, 1);
 			final int[] threadPermute = currentPermute.clone();
-			final int derp = i;
+			final int threadID = i;
 			Thread aThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					try {
 						TSPSolver threadTSP = new TSPSolver();
 						int[][] maybeReadIssue = matrix.clone();
-						pathArray[derp] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate, watchperson).clone();
-						valueArray[derp] = threadTSP.threadablePermuteValue(pathArray[derp], matrix);
+						pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate, watchperson).clone();
+						valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}					
@@ -216,7 +216,7 @@ public class TSPSolver {
 
 		for (int i = 0; i < matrixJumps.length; i++) {
 			alteredMatrixLine += lineValues.substring(matrixJumps[i],
-					matrixJumps[i] + 1) + "\t";
+					matrixJumps[i] + 1) + " ";
 		}
 		alteredMatrixLine += alteredMatrixLine.substring(0, 1);
 
