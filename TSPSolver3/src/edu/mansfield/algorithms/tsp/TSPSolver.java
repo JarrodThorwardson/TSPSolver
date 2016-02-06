@@ -11,10 +11,11 @@ public class TSPSolver {
 	static volatile long runTime;
 	static volatile long possiblePermutes;
 	static volatile int[][] matrix, pathArray;
-	static volatile int bestValue, threadCount, lowEstimate;
+	static volatile int bestValue, threadCount, lowEstimate, watchperson;
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp = new TSPSolver();
+		watchperson = 1;
 		int[] currentPermute;
 		double threadCeiling = 0;
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
@@ -24,7 +25,7 @@ public class TSPSolver {
 		lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
 		
 		//possiblePermutes is involved in optimizing based on a symmetrical graph
-		possiblePermutes = (factorial(matrix[0].length - 1)/2);
+		possiblePermutes = (factorial(matrix[0].length - 2));
 		
 		//currentPermute is used for tracking which route is being evaluated
 		currentPermute = new int[matrix[0].length];
@@ -47,31 +48,19 @@ public class TSPSolver {
 		
 		bestArray = currentPermute.clone();
 		bestValue = Integer.MAX_VALUE;
+		// Launching sufficient threads, assuming a symmetric graph.
 		threadCeiling = Math.ceil(currentPermute.length / 2.0);
 		threadCount = (int) threadCeiling;
+		// Arrays used to collect results from the various threads.
 		valueArray = new int[threadCount];
 		pathArray = new int[threadCount][bestArray.length];
-		/*
-		int currentValue = 0;
-		for (long i = 0; i < possiblePermutes; i++) {
-			currentValue = tsp.getPermuteValue(currentPermute, matrix, lowEstimate);
-			if(currentValue <= bestValue){
-				bestArray = currentPermute.clone();
-				bestValue = currentValue;
-				lowEstimate = bestValue;
-			}
-	//		System.out.print(printArray(currentPermute));		
-	//		System.out.println("\tDistance:\t" + currentValue);
-			currentPermute = tsp.getLexes(currentPermute);
-		}
-		*/
+		
 		//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
 		swapIndex = bestArray.clone();
-		possiblePermutes = (factorial(matrix[0].length - 2) / 2);
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 		
 		for (int i=0; i< threadCount; i++) {
-			currentPermute[1] = swapIndex[i+1];
+			currentPermute[watchperson] = swapIndex[i+1];
 			currentPermute[i+1] = swapIndex[1];
 			bubbleSort(currentPermute, 1);
 			final int[] threadPermute = currentPermute.clone();
@@ -82,7 +71,7 @@ public class TSPSolver {
 					try {
 						TSPSolver threadTSP = new TSPSolver();
 						int[][] maybeReadIssue = matrix.clone();
-						pathArray[derp] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate).clone();
+						pathArray[derp] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate, watchperson).clone();
 						valueArray[derp] = threadTSP.threadablePermuteValue(pathArray[derp], matrix);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -121,10 +110,6 @@ public class TSPSolver {
 			}
 		}
 		
-		//proof that these methods work, hopefully they can still work when opening several threads
-		//bestArray = tsp.threadablePermuteFinding(bestArray, possiblePermutes, lowEstimate).clone();
-		//bestValue = tsp.threadablePermuteValue(bestArray, matrix);
-		
 		for (int[] path : pathArray){
 			if (tsp.threadablePermuteValue(path, matrix) < bestValue){
 				bestArray = path.clone();
@@ -150,16 +135,15 @@ public class TSPSolver {
 	}
 	
 	/*
-	 * helper method intended to account for multi-threading requirements.
-	 * Factors out the loop in the main method.
+	 * Evaluates all possible permutations, and uses branch-and-bound implementation.
 	 * */
 	
-	public int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, long loops, int estimate){
+	public int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, long loops, int estimate, int sentinelIndex){
 		TSPSolver tsp1 = new TSPSolver();
 		int[] bestArray1 = initial.clone();
 		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
-		int sentinel = initial[1];
+		int sentinel = initial[sentinelIndex];
 		
 		for (long i = 0; i < loops; i++) {
 			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
@@ -172,7 +156,7 @@ public class TSPSolver {
 	//		System.out.print(printArray(currentPermute));		
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
-			if (initial[1] != sentinel){
+			if (initial[sentinelIndex] != sentinel){
 				return bestArray1;
 			}
 		}
@@ -213,26 +197,6 @@ public class TSPSolver {
 		return num;
 	}
 	
-	/*
-	 * The getPermuteValue will look at a permutation and return it's value.
-	 * Also, it includes branch-and-bound optimization.  Unfortunately, it also assumes single-thread.
-	 */	
-	/*
-	public int getPermuteValue(int[] permute, int[][] matrix, int lowEstimate){
-		int num = 0;
-		
-		for(int i = 0; i < permute.length - 1; i++){
-			num += matrix[permute[i]][permute[i+1]];
-			if(num > lowEstimate){
-				insertionSort(currentPermute, i);
-				return num;
-			}
-		}
-		
-		num += matrix[permute[permute.length-1]][permute[0]];
-		
-		return num;
-	}*/
 
 	/*
 	 * nextPermutaion will return the next permutation of the input.
@@ -243,8 +207,6 @@ public class TSPSolver {
 	}
 
 	/*
-	 *
-	 * 
 	 * When given an array of ints this will return the corresponding symbols
 	 * from a long list of symbols to indicate which order jumps are made in.
 	 */
@@ -409,13 +371,13 @@ public class TSPSolver {
 			}
 	}
 	
-	public static void bubbleSort(int[] a, int position /*String direction*/)
+	public static void bubbleSort(int[] a, int position)
 	{
 		int out, in;
 		position++;
 		for(out=a.length-1; out>position; out--)
 			for(in=position; in<out; in++)
-				if(a[in] > a[in+1] /*&& direction.equalsIgnoreCase("A") || a[in] < a[in+1] && direction.equalsIgnoreCase("D")*/)
+				if(a[in] > a[in+1])
 				{
 					int temp = a[in];
 					a[in] = a[in+1];
