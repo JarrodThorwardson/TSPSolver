@@ -8,14 +8,15 @@ import java.util.Random;
 public class MatrixGeneration {
 
 	public static void main(String[] args) throws IOException {
-		int cities = 27;
+		int cities = 20;
+		int version = 5;
 		int noGo = 100000;
 		Random rng = new Random();
 		StringBuilder matrixString = new StringBuilder();
 		int[][] cityMatrix = new int[cities][cities];
 		int mirror = 0;
 
-		BufferedWriter outPut = new BufferedWriter(new FileWriter(cities + ".txt"));
+		BufferedWriter outPut = new BufferedWriter(new FileWriter(cities + ".txt" + "mk" + version));
 		
 		
 		for (int i=0;i<cities; i++){
