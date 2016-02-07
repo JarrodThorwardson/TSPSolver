@@ -52,7 +52,7 @@ public class TSPSolver {
 		threadCeiling = Math.ceil(currentPermute.length / 2.0);
 		threadCount = (int) threadCeiling;
 		// Arrays used to collect results from the various threads.
-		valueArray = new int[threadCount];
+		//valueArray = new int[threadCount];
 		pathArray = new int[threadCount][bestArray.length];
 		
 		//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
@@ -72,14 +72,15 @@ public class TSPSolver {
 						TSPSolver threadTSP = new TSPSolver();
 						int[][] maybeReadIssue = matrix.clone();
 						pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate, watchperson).clone();
-						valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
+						//valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}					
 				}
 			});
 
-			System.out.println("Current path:\t" + tsp.MatrixLineToString(currentPermute) + "\tCurrent distance:\t" +tsp.threadablePermuteValue(currentPermute, matrix));
+			System.out.println("Current path: " + tsp.MatrixLineToString(currentPermute) + 
+					" Current distance: " + tsp.threadablePermuteValue(currentPermute, matrix));
 			currentPermute = swapIndex.clone();
 			aThread.start();
 			threads.add(aThread);
