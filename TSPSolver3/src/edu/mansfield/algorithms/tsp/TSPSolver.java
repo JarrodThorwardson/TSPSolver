@@ -24,8 +24,6 @@ public class TSPSolver {
 		matrix = tsp.StringToIntMatrix(matrixString);
 		lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
 		
-		//possiblePermutes is involved in optimizing based on a symmetrical graph
-		possiblePermutes = (factorial(matrix[0].length - 2));
 		
 		//currentPermute is used for tracking which route is being evaluated
 		currentPermute = new int[matrix[0].length];
@@ -65,10 +63,10 @@ public class TSPSolver {
 		
 		for (int[] permutePath : nnArray){
 			bubbleSort(permutePath, nearestWatchPerson);
-			permutePath = tsp.threadablePermuteFinding(matrix, permutePath, possiblePermutes, lowEstimate, nearestWatchPerson);
+			permutePath = tsp.threadablePermuteFinding(matrix, permutePath, lowEstimate, nearestWatchPerson);
 			
-			System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
-					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));
+			/*System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
+					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));*/
 			if(tsp.threadablePermuteValue(permutePath, matrix) < lowEstimate){
 				lowEstimate = tsp.threadablePermuteValue(permutePath, matrix);
 			}
@@ -92,7 +90,7 @@ public class TSPSolver {
 					try {
 						TSPSolver threadTSP = new TSPSolver();
 						int[][] maybeReadIssue = matrix.clone();
-						pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, possiblePermutes, lowEstimate, watchperson).clone();
+						pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate, watchperson).clone();
 						//valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -160,14 +158,14 @@ public class TSPSolver {
 	 * Evaluates all possible permutations, and uses branch-and-bound implementation.
 	 * */
 	
-	public int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, long loops, int estimate, int sentinelIndex){
+	public int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, int estimate, int sentinelIndex){
 		TSPSolver tsp1 = new TSPSolver();
 		int[] bestArray1 = initial.clone();
 		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
 		int sentinel = initial[sentinelIndex];
 		
-		for (long i = 0; i < loops; i++) {
+		while (initial[sentinelIndex] == sentinel) {
 			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
 			currentValue = tsp1.threadablePermuteValue(initial, clonedMatrix);
 			if(currentValue < bestValue1){
@@ -178,11 +176,7 @@ public class TSPSolver {
 	//		System.out.print(printArray(currentPermute));		
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
-			if (initial[sentinelIndex] != sentinel){
-				return bestArray1;
-			}
 		}
-		System.out.println("Best path lol:\t" + tsp1.MatrixLineToString(bestArray1) + "\tBest Distance lol:\t" + bestValue1);
 		return bestArray1;
 	}
 	
