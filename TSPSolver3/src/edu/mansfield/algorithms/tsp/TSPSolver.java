@@ -9,135 +9,20 @@ public class TSPSolver {
 	static volatile int[] bestArray, swapIndex, valueArray;
 	static volatile long time;
 	static volatile long runTime;
-	static volatile long possiblePermutes;
 	static volatile int[][] matrix, pathArray, nnArray;
 	static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp = new TSPSolver();
 		watchperson = 1;
-		int[] currentPermute;
-		double threadCeiling = 0;
-		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		String matrixString = tsp.fileReadIn();
 		time = System.currentTimeMillis();
 		matrix = tsp.StringToIntMatrix(matrixString);
-		lowEstimate = nnSolver.oldNearestNeighborRun(matrix);
-		
-		
-		//currentPermute is used for tracking which route is being evaluated
-		currentPermute = new int[matrix[0].length];
-		
-		//no need to start more than n/2 threads, assuming symmetric graph
-		//each thread shouldn't have to run more than factorial(matrix.length -2) since index 0 needn't increment
-		/* 012345 = 012345 terminates at: 054321
-		 * 123450 = 102345 terminates at: 154320
-		 * 234501 = 201345 terminates at: 254310
-		 * 345012 = 301245 terminates at: 354210
-		 * 450123 = 401235 terminates at: 453210
-		 * 501234 = 501234 terminates at: 543210
-		 * */
-		
-		
-		//initializing currentPermute with a valid path
-		for(int i = 0; i < currentPermute.length; i++){
-			currentPermute[i] = i;
-		}
-		
-		bestArray = currentPermute.clone();
-		bestValue = Integer.MAX_VALUE;
-		// Launching sufficient threads, assuming a symmetric graph.
-		threadCeiling = Math.ceil(currentPermute.length / 2.0);
-		threadCount = (int) threadCeiling;
-		// Arrays used to collect results from the various threads.
-		//valueArray = new int[threadCount];
-		pathArray = new int[threadCount][bestArray.length];
-		
-		//producing a more refined estimate for best path
-		nnArray = nnSolver.oldNearestNeighborRunArray(matrix);
-		if (nnArray[0].length > 17){
-			nearestWatchPerson = nnArray[0].length - 11;
-		} else{
-			nearestWatchPerson = nnArray[0].length / 2;
-		}
-		
-		for (int[] permutePath : nnArray){
-			bubbleSort(permutePath, nearestWatchPerson);
-			permutePath = tsp.threadablePermuteFinding(matrix, permutePath, lowEstimate, nearestWatchPerson);
-			
-			/*System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
-					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));*/
-			if(tsp.threadablePermuteValue(permutePath, matrix) < lowEstimate){
-				lowEstimate = tsp.threadablePermuteValue(permutePath, matrix);
-			}
-		}
-		
+		lowEstimate = lowEstimateEval(matrix);
+		tsp.threadLaunchingPermuteFinder();
+
 		System.out.println("Best Distance to Start: " + lowEstimate);
-		
-		//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
-		swapIndex = bestArray.clone();
-		ArrayList<Thread> threads = new ArrayList<Thread>();
-		
-		for (int i=0; i< threadCount; i++) {
-			currentPermute[watchperson] = swapIndex[i+1];
-			currentPermute[i+1] = swapIndex[1];
-			bubbleSort(currentPermute, 1);
-			final int[] threadPermute = currentPermute.clone();
-			final int threadID = i;
-			Thread aThread = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						TSPSolver threadTSP = new TSPSolver();
-						int[][] maybeReadIssue = matrix.clone();
-						pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate, watchperson).clone();
-						//valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}					
-				}
-			});
 
-			System.out.println("Current path: " + tsp.MatrixLineToString(currentPermute) + 
-					" Current distance: " + tsp.threadablePermuteValue(currentPermute, matrix));
-			currentPermute = swapIndex.clone();
-			aThread.start();
-			threads.add(aThread);
-			
-		}
-
-		boolean threadsAreAlive;
-
-		do {
-			threadsAreAlive = false;
-			for (Thread thread : threads) {
-				if (thread.isAlive()) {
-					threadsAreAlive = true;
-				}
-			}
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		} while (threadsAreAlive);
-
-		for (Thread thread : threads) {
-			try {
-				thread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		for (int[] path : pathArray){
-			if (tsp.threadablePermuteValue(path, matrix) < bestValue){
-				bestArray = path.clone();
-				bestValue = tsp.threadablePermuteValue(path, matrix);
-			}
-			System.out.println("This path:\t" + tsp.MatrixLineToString(path) + "\tThis Distance:\t" + tsp.threadablePermuteValue(path, matrix));
-		}
-		
 		runTime = System.currentTimeMillis() - time;
 		
 		System.out.println("Best path:\t" + tsp.MatrixLineToString(bestArray) + "\tBest Distance:\t" + bestValue);
@@ -152,6 +37,126 @@ public class TSPSolver {
 					    TimeUnit.MILLISECONDS.toSeconds(runTime) - 
 					    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime))));
 		
+	}
+	
+	public int[] threadLaunchingPermuteFinder(){
+		//no need to start more than n/2 threads, assuming symmetric graph
+		//each thread shouldn't have to run more than factorial(matrix.length -2) since index 0 needn't increment
+		/* 012345 = 012345 terminates at: 054321
+		 * 123450 = 102345 terminates at: 154320
+		 * 234501 = 201345 terminates at: 254310
+		 * 345012 = 301245 terminates at: 354210
+		 * 450123 = 401235 terminates at: 453210
+		 * 501234 = 501234 terminates at: 543210
+		 * */	
+		TSPSolver tsp = new TSPSolver();
+		int[] currentPermute = new int[matrix[0].length];
+		double threadCeiling = 0;
+		//initializing currentPermute with a valid path
+			for(int i = 0; i < currentPermute.length; i++){
+				currentPermute[i] = i;
+			}
+			
+			bestArray = currentPermute.clone();
+			bestValue = Integer.MAX_VALUE;
+			// Launching sufficient threads, assuming a symmetric graph.
+			threadCeiling = Math.ceil(currentPermute.length / 2.0);
+			threadCount = (int) threadCeiling;
+			// Arrays used to collect results from the various threads.
+			//valueArray = new int[threadCount];
+			pathArray = new int[threadCount][bestArray.length];
+			
+			System.out.println("Best Distance to Start: " + lowEstimate);
+			
+			//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
+			swapIndex = bestArray.clone();
+			ArrayList<Thread> threads = new ArrayList<Thread>();
+			
+			for (int i=0; i< threadCount; i++) {
+				currentPermute[watchperson] = swapIndex[i+1];
+				currentPermute[i+1] = swapIndex[1];
+				bubbleSort(currentPermute, 1);
+				final int[] threadPermute = currentPermute.clone();
+				final int threadID = i;
+				Thread aThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							TSPSolver threadTSP = new TSPSolver();
+							int[][] maybeReadIssue = matrix.clone();
+							pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate, watchperson).clone();
+							//valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}					
+					}
+				});
+
+				System.out.println("Current path: " + tsp.MatrixLineToString(currentPermute) + 
+						" Current distance: " + tsp.threadablePermuteValue(currentPermute, matrix));
+				currentPermute = swapIndex.clone();
+				aThread.start();
+				threads.add(aThread);
+				
+			}
+
+			boolean threadsAreAlive;
+
+			do {
+				threadsAreAlive = false;
+				for (Thread thread : threads) {
+					if (thread.isAlive()) {
+						threadsAreAlive = true;
+					}
+				}
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} while (threadsAreAlive);
+
+			for (Thread thread : threads) {
+				try {
+					thread.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			for (int[] path : pathArray){
+				if (tsp.threadablePermuteValue(path, matrix) < bestValue){
+					bestArray = path.clone();
+					bestValue = tsp.threadablePermuteValue(path, matrix);
+				}
+				System.out.println("This path:\t" + tsp.MatrixLineToString(path) + "\tThis Distance:\t" + tsp.threadablePermuteValue(path, matrix));
+			}
+			
+			return bestArray;
+	}
+	
+	public static int lowEstimateEval(int[][] evalMatrix){
+		TSPSolver tsp = new TSPSolver();
+		NearestNeighbor2 nnSolver = new NearestNeighbor2();
+		lowEstimate = nnSolver.oldNearestNeighborRun(evalMatrix);
+		nnArray = nnSolver.oldNearestNeighborRunArray(evalMatrix);
+		if (nnArray[0].length > 17){
+			nearestWatchPerson = nnArray[0].length - 11;
+		} else{
+			nearestWatchPerson = nnArray[0].length / 2;
+		}
+		
+		for (int[] permutePath : nnArray){
+			bubbleSort(permutePath, nearestWatchPerson);
+			permutePath = tsp.threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
+			
+			/*System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
+					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));*/
+			if(tsp.threadablePermuteValue(permutePath, evalMatrix) < lowEstimate){
+				lowEstimate = tsp.threadablePermuteValue(permutePath, evalMatrix);
+			}
+		}
+		return lowEstimate;
 	}
 	
 	/*
