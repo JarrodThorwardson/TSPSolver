@@ -57,13 +57,14 @@ public class TSPSolver {
 		
 		//producing a more refined estimate for best path
 		nnArray = nnSolver.oldNearestNeighborRunArray(matrix);
-		if (nnArray[0].length > 15){
-			nearestWatchPerson = nnArray[0].length - 10;
+		if (nnArray[0].length > 17){
+			nearestWatchPerson = nnArray[0].length - 11;
 		} else{
 			nearestWatchPerson = nnArray[0].length / 2;
 		}
 		
 		for (int[] permutePath : nnArray){
+			bubbleSort(permutePath, nearestWatchPerson);
 			permutePath = tsp.threadablePermuteFinding(matrix, permutePath, possiblePermutes, lowEstimate, nearestWatchPerson);
 			
 			System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
