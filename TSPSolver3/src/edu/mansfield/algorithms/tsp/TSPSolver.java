@@ -10,8 +10,8 @@ public class TSPSolver {
 	static volatile long time;
 	static volatile long runTime;
 	static volatile long possiblePermutes;
-	static volatile int[][] matrix, pathArray;
-	static volatile int bestValue, threadCount, lowEstimate, watchperson;
+	static volatile int[][] matrix, pathArray, nnArray;
+	static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp = new TSPSolver();
@@ -54,6 +54,26 @@ public class TSPSolver {
 		// Arrays used to collect results from the various threads.
 		//valueArray = new int[threadCount];
 		pathArray = new int[threadCount][bestArray.length];
+		
+		//producing a more refined estimate for best path
+		nnArray = nnSolver.oldNearestNeighborRunArray(matrix);
+		if (nnArray[0].length > 15){
+			nearestWatchPerson = nnArray[0].length - 10;
+		} else{
+			nearestWatchPerson = nnArray[0].length / 2;
+		}
+		
+		for (int[] permutePath : nnArray){
+			permutePath = tsp.threadablePermuteFinding(matrix, permutePath, possiblePermutes, lowEstimate, nearestWatchPerson);
+			
+			System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
+					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));
+			if(tsp.threadablePermuteValue(permutePath, matrix) < lowEstimate){
+				lowEstimate = tsp.threadablePermuteValue(permutePath, matrix);
+			}
+		}
+		
+		System.out.println("Best Distance to Start: " + lowEstimate);
 		
 		//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
 		swapIndex = bestArray.clone();
