@@ -21,8 +21,6 @@ public class TSPSolver {
 		lowEstimate = lowEstimateEval(matrix);
 		tsp.threadLaunchingPermuteFinder();
 
-		System.out.println("Best Distance to Start: " + lowEstimate);
-
 		runTime = System.currentTimeMillis() - time;
 		
 		System.out.println("Best path:\t" + tsp.MatrixLineToString(bestArray) + "\tBest Distance:\t" + bestValue);
@@ -182,6 +180,8 @@ public class TSPSolver {
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
 		}
+		System.out.println("Thread #" + sentinel + " done: "+ tsp1.MatrixLineToString(bestArray1) + 
+				" Distance: " + tsp1.threadablePermuteValue(bestArray1, clonedMatrix));
 		return bestArray1;
 	}
 	
