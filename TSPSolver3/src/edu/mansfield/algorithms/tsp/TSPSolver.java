@@ -167,6 +167,8 @@ public class TSPSolver {
 		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
 		int sentinel = initial[sentinelIndex];
+		//int lowEstTrip = initial[sentinelIndex + 1]; This, even done so infrequently as seen below,
+		// results in far too many issues with threads waiting their turn to be worthwhile at 19 cities.
 		
 		while (initial[sentinelIndex] == sentinel) {
 			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
@@ -176,6 +178,15 @@ public class TSPSolver {
 				bestValue1 = currentValue;
 				estimate = bestValue1;
 			}
+			/*if(lowEstTrip < initial[sentinelIndex + 1] - 3){
+				if(bestValue1 < lowEstimate){
+					lowEstimate = bestValue1;
+				}
+				if(lowEstimate < bestValue1){
+					bestValue1 = lowEstimate;
+				}
+				lowEstTrip = initial[sentinelIndex + 1];
+			}*/
 	//		System.out.print(printArray(currentPermute));		
 	//		System.out.println("\tDistance:\t" + currentValue);
 			initial = tsp1.getLexes(initial);
