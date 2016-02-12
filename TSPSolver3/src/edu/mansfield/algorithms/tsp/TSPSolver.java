@@ -1,4 +1,5 @@
 package edu.mansfield.algorithms.tsp;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -6,234 +7,276 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class TSPSolver {
-	static volatile int[] bestArray, swapIndex, valueArray;
-	static volatile long time;
-	static volatile long runTime;
-	static volatile int[][] matrix, pathArray, nnArray;
-	static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
+	private static volatile int[] bestArray, swapIndex, initialPermute;
+	private static volatile long time;
+	private static volatile long runTime;
+	private static volatile int[][] matrix, pathArray, nnArray;
+	private static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
+
+	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel) {
+		matrix = inputMatrix.clone();
+		initialPermute = inputPermute.clone();
+		watchperson = indexSentinel;
+	}
 
 	public static void main(String[] args) throws FileNotFoundException {
-		TSPSolver tsp = new TSPSolver();
-		watchperson = 1;
-		String matrixString = tsp.fileReadIn();
-		time = System.currentTimeMillis();
-		matrix = tsp.StringToIntMatrix(matrixString);
-		lowEstimate = lowEstimateEval(matrix);
-		tsp.threadLaunchingPermuteFinder();
+		TSPSolver tsp;
+		int watchPersonToo = 1;
+		int[][] start;
+		int[] startHere;
+		int[] shortest;
+		String matrixString = fileReadIn();
 
-		runTime = System.currentTimeMillis() - time;
-		
-		System.out.println("Best path:\t" + tsp.MatrixLineToString(bestArray) + "\tBest Distance:\t" + bestValue);
+		start = StringToIntMatrix(matrixString);
+		startHere = new int[start[0].length];
+		for (int i = 0; i < startHere.length; i++) {
+			startHere[i] = i;
+		}
+
+		tsp = new TSPSolver(start, startHere, watchPersonToo);
+		shortest = tsp.solve();
+
+		System.out.println("Best path:\t" + MatrixLineToString(shortest) + "\tBest Distance:\t"
+				+ threadablePermuteValue(shortest, start));
 		System.out.println("Run time in milliseconds: " + runTime);
-		
-		// Time formatting code taken from http://stackoverflow.com/questions/9027317/how-to-convert-milliseconds-to-hhmmss-format
-		System.out.println("hh:mm:ss " + 
-				String.format("%02d:%02d:%02d", 
-					    TimeUnit.MILLISECONDS.toHours(runTime),
-					    TimeUnit.MILLISECONDS.toMinutes(runTime) - 
-					    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(runTime)),
-					    TimeUnit.MILLISECONDS.toSeconds(runTime) - 
-					    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime))));
-		
+
+		// Time formatting code taken from
+		// http://stackoverflow.com/questions/9027317/how-to-convert-milliseconds-to-hhmmss-format
+		System.out.println("hh:mm:ss " + String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(runTime),
+				TimeUnit.MILLISECONDS.toMinutes(runTime)
+						- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(runTime)),
+				TimeUnit.MILLISECONDS.toSeconds(runTime)
+						- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime))));
+
 	}
-	
-	public int[] threadLaunchingPermuteFinder(){
-		//no need to start more than n/2 threads, assuming symmetric graph
-		//each thread shouldn't have to run more than factorial(matrix.length -2) since index 0 needn't increment
-		/* 012345 = 012345 terminates at: 054321
-		 * 123450 = 102345 terminates at: 154320
-		 * 234501 = 201345 terminates at: 254310
-		 * 345012 = 301245 terminates at: 354210
-		 * 450123 = 401235 terminates at: 453210
-		 * 501234 = 501234 terminates at: 543210
-		 * */	
-		TSPSolver tsp = new TSPSolver();
+
+	public int[] solve() {
+		time = System.currentTimeMillis();
+		lowEstimate = lowEstimateEval(matrix);
+		threadLaunchingPermuteFinder();
+		runTime = System.currentTimeMillis() - time;
+		return bestArray;
+	}
+
+	public static boolean symmetryCheck(int[][] unknownMatrix) {
+		boolean symmetric = true;
+		int nodes = unknownMatrix[0].length;
+
+		for (int i = 0; i < nodes; i++) {
+			for (int j = 0; j < nodes; j++) {
+				if (unknownMatrix[i][j] != unknownMatrix[j][i]) {
+					symmetric = false;
+				}
+			}
+		}
+
+		return symmetric;
+	}
+
+	public static int[] threadLaunchingPermuteFinder() {
+		// no need to start more than n/2 threads, assuming symmetric graph
+		// each thread shouldn't have to run more than factorial(matrix.length
+		// -2) since index 0 needn't increment
+		/*
+		 * 012345 = 012345 terminates at: 054321 123450 = 102345 terminates at:
+		 * 154320 234501 = 201345 terminates at: 254310 345012 = 301245
+		 * terminates at: 354210 450123 = 401235 terminates at: 453210 501234 =
+		 * 501234 terminates at: 543210
+		 */
 		int[] currentPermute = new int[matrix[0].length];
 		double threadCeiling = 0;
-		//initializing currentPermute with a valid path
-			for(int i = 0; i < currentPermute.length; i++){
-				currentPermute[i] = i;
-			}
-			
-			bestArray = currentPermute.clone();
-			bestValue = Integer.MAX_VALUE;
-			// Launching sufficient threads, assuming a symmetric graph.
+		// initializing currentPermute with a valid path
+		currentPermute = initialPermute.clone();
+
+		bestArray = currentPermute.clone();
+		bestValue = Integer.MAX_VALUE;
+
+		// Launching sufficient threads, assuming a symmetric graph.
+		if (symmetryCheck(matrix)) {
 			threadCeiling = Math.ceil(currentPermute.length / 2.0);
-			threadCount = (int) threadCeiling;
-			// Arrays used to collect results from the various threads.
-			//valueArray = new int[threadCount];
-			pathArray = new int[threadCount][bestArray.length];
-			
-			System.out.println("Best Distance to Start: " + lowEstimate);
-			
-			//Many thanks to Squirtle Squad for examples of how to launch multiple threads in Java.
-			swapIndex = bestArray.clone();
-			ArrayList<Thread> threads = new ArrayList<Thread>();
-			
-			for (int i=0; i< threadCount; i++) {
-				currentPermute[watchperson] = swapIndex[i+1];
-				currentPermute[i+1] = swapIndex[1];
-				bubbleSort(currentPermute, 1);
-				final int[] threadPermute = currentPermute.clone();
-				final int threadID = i;
-				Thread aThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							TSPSolver threadTSP = new TSPSolver();
-							int[][] maybeReadIssue = matrix.clone();
-							pathArray[threadID] = threadTSP.threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate, watchperson).clone();
-							//valueArray[threadID] = threadTSP.threadablePermuteValue(pathArray[threadID], matrix);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}					
-					}
-				});
+		} else {
+			threadCeiling = currentPermute.length;
+		}
 
-				System.out.println("Current path: " + tsp.MatrixLineToString(currentPermute) + 
-						" Current distance: " + tsp.threadablePermuteValue(currentPermute, matrix));
-				currentPermute = swapIndex.clone();
-				aThread.start();
-				threads.add(aThread);
-				
-			}
+		threadCount = (int) threadCeiling;
+		// Arrays used to collect results from the various threads.
+		// valueArray = new int[threadCount];
+		pathArray = new int[threadCount][bestArray.length];
 
-			boolean threadsAreAlive;
+		System.out.println("Best Distance to Start: " + lowEstimate);
 
-			do {
-				threadsAreAlive = false;
-				for (Thread thread : threads) {
-					if (thread.isAlive()) {
-						threadsAreAlive = true;
+		// Many thanks to Squirtle Squad for examples of how to launch multiple
+		// threads in Java.
+		swapIndex = bestArray.clone();
+		ArrayList<Thread> threads = new ArrayList<Thread>();
+
+		for (int i = 0; i < threadCount; i++) {
+			currentPermute[watchperson] = swapIndex[i + 1];
+			currentPermute[i + 1] = swapIndex[watchperson];
+			bubbleSort(currentPermute, watchperson);
+			final int[] threadPermute = currentPermute.clone();
+			final int threadID = i;
+			Thread aThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						int[][] maybeReadIssue = matrix.clone();
+						pathArray[threadID] = threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate,
+								watchperson).clone();
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			} while (threadsAreAlive);
+			});
 
+			System.out.println("Current path: " + MatrixLineToString(currentPermute) + " Current distance: "
+					+ threadablePermuteValue(currentPermute, matrix));
+			currentPermute = swapIndex.clone();
+			aThread.start();
+			threads.add(aThread);
+
+		}
+
+		boolean threadsAreAlive;
+
+		do {
+			threadsAreAlive = false;
 			for (Thread thread : threads) {
-				try {
-					thread.join();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				if (thread.isAlive()) {
+					threadsAreAlive = true;
 				}
 			}
-			
-			for (int[] path : pathArray){
-				if (tsp.threadablePermuteValue(path, matrix) < bestValue){
-					bestArray = path.clone();
-					bestValue = tsp.threadablePermuteValue(path, matrix);
-				}
-				System.out.println("This path:\t" + tsp.MatrixLineToString(path) + "\tThis Distance:\t" + tsp.threadablePermuteValue(path, matrix));
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			
-			return bestArray;
+		} while (threadsAreAlive);
+
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		for (int[] path : pathArray) {
+			if (threadablePermuteValue(path, matrix) < bestValue) {
+				bestArray = path.clone();
+				bestValue = threadablePermuteValue(path, matrix);
+			}
+			System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
+					+ threadablePermuteValue(path, matrix));
+		}
+
+		return bestArray;
 	}
-	
-	public static int lowEstimateEval(int[][] evalMatrix){
-		TSPSolver tsp = new TSPSolver();
+
+	public static int lowEstimateEval(int[][] evalMatrix) {
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		lowEstimate = nnSolver.oldNearestNeighborRun(evalMatrix);
 		nnArray = nnSolver.oldNearestNeighborRunArray(evalMatrix);
-		if (nnArray[0].length > 17){
+		if (nnArray[0].length > 17) {
 			nearestWatchPerson = nnArray[0].length - 11;
-		} else{
+		} else {
 			nearestWatchPerson = nnArray[0].length / 2;
 		}
-		
-		for (int[] permutePath : nnArray){
+
+		for (int[] permutePath : nnArray) {
 			bubbleSort(permutePath, nearestWatchPerson);
-			permutePath = tsp.threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
-			
-			/*System.out.println("Approximation path: " + tsp.MatrixLineToString(permutePath) + 
-					" Approximation distance: " + tsp.threadablePermuteValue(permutePath, matrix));*/
-			if(tsp.threadablePermuteValue(permutePath, evalMatrix) < lowEstimate){
-				lowEstimate = tsp.threadablePermuteValue(permutePath, evalMatrix);
+			permutePath = threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
+
+			/*
+			 * System.out.println("Approximation path: " +
+			 * tsp.MatrixLineToString(permutePath) + " Approximation distance: "
+			 * + tsp.threadablePermuteValue(permutePath, matrix));
+			 */
+			if (threadablePermuteValue(permutePath, evalMatrix) < lowEstimate) {
+				lowEstimate = threadablePermuteValue(permutePath, evalMatrix);
 			}
 		}
 		return lowEstimate;
 	}
-	
+
 	/*
-	 * Evaluates all possible permutations, and uses branch-and-bound implementation.
-	 * */
-	
-	public int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, int estimate, int sentinelIndex){
-		TSPSolver tsp1 = new TSPSolver();
+	 * Evaluates all possible permutations, and uses branch-and-bound
+	 * implementation.
+	 */
+
+	public static int[] threadablePermuteFinding(int[][] clonedMatrix, int[] initial, int estimate, int sentinelIndex) {
 		int[] bestArray1 = initial.clone();
 		int bestValue1 = Integer.MAX_VALUE;
 		int currentValue = 0;
 		int sentinel = initial[sentinelIndex];
-		//int lowEstTrip = initial[sentinelIndex + 1]; This, even done so infrequently as seen below,
-		// results in far too many issues with threads waiting their turn to be worthwhile at 19 cities.
-		
+		// int lowEstTrip = initial[sentinelIndex + 1]; This, even done so
+		// infrequently as seen below,
+		// results in far too many issues with threads waiting their turn to be
+		// worthwhile at 19 cities.
+
 		while (initial[sentinelIndex] == sentinel) {
-			initial = tsp1.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
-			currentValue = tsp1.threadablePermuteValue(initial, clonedMatrix);
-			if(currentValue < bestValue1){
+			initial = threadablePermuteBranchBound(initial, clonedMatrix, estimate);
+			currentValue = threadablePermuteValue(initial, clonedMatrix);
+			if (currentValue < bestValue1) {
 				bestArray1 = initial.clone();
 				bestValue1 = currentValue;
 				estimate = bestValue1;
 			}
-			/*if(lowEstTrip < initial[sentinelIndex + 1] - 3){
-				if(bestValue1 < lowEstimate){
-					lowEstimate = bestValue1;
-				}
-				if(lowEstimate < bestValue1){
-					bestValue1 = lowEstimate;
-				}
-				lowEstTrip = initial[sentinelIndex + 1];
-			}*/
-	//		System.out.print(printArray(currentPermute));		
-	//		System.out.println("\tDistance:\t" + currentValue);
-			initial = tsp1.getLexes(initial);
+			/*
+			 * if(lowEstTrip < initial[sentinelIndex + 1] - 3){ if(bestValue1 <
+			 * lowEstimate){ lowEstimate = bestValue1; } if(lowEstimate <
+			 * bestValue1){ bestValue1 = lowEstimate; } lowEstTrip =
+			 * initial[sentinelIndex + 1]; }
+			 */
+			// System.out.print(printArray(currentPermute));
+			// System.out.println("\tDistance:\t" + currentValue);
+			initial = getLexes(initial);
 		}
-		System.out.println("Thread #" + sentinel + " done: "+ tsp1.MatrixLineToString(bestArray1) + 
-				" Distance: " + tsp1.threadablePermuteValue(bestArray1, clonedMatrix));
+		System.out.println("Thread #" + sentinel + " done: " + MatrixLineToString(bestArray1) + " Distance: "
+				+ threadablePermuteValue(bestArray1, clonedMatrix));
 		return bestArray1;
 	}
-	
+
 	/*
-	 * helper method which assesses candidate permutation for branch and bound purposes.
-	 * */
-	public int[] threadablePermuteBranchBound(int[] sortable, int[][] matrix, int estimate){
+	 * helper method which assesses candidate permutation for branch and bound
+	 * purposes.
+	 */
+	public static int[] threadablePermuteBranchBound(int[] sortable, int[][] matrix, int estimate) {
 		int num = 0;
-		
-		for(int i = 0; i < sortable.length - 1; i++){
-			num += matrix[sortable[i]][sortable[i+1]];
-			if(num > estimate){
+
+		for (int i = 0; i < sortable.length - 1; i++) {
+			num += matrix[sortable[i]][sortable[i + 1]];
+			if (num > estimate) {
 				insertionSort(sortable, i);
 				return sortable;
 			}
 		}
-		
-		num += matrix[sortable[sortable.length-1]][sortable[0]];
-		
+
+		num += matrix[sortable[sortable.length - 1]][sortable[0]];
+
 		return sortable;
 	}
+
 	/*
-	 * threadablePermuteValue only assesses the cost of the path, in order to not assume single-threading
-	 * */
-	public int threadablePermuteValue(int[] permute, int[][] matrix){
+	 * threadablePermuteValue only assesses the cost of the path, in order to
+	 * not assume single-threading
+	 */
+	public static int threadablePermuteValue(int[] permute, int[][] matrix) {
 		int num = 0;
-		
-		for(int i = 0; i < permute.length - 1; i++){
-			num += matrix[permute[i]][permute[i+1]];
+
+		for (int i = 0; i < permute.length - 1; i++) {
+			num += matrix[permute[i]][permute[i + 1]];
 		}
-		
-		num += matrix[permute[permute.length-1]][permute[0]];
-		
+
+		num += matrix[permute[permute.length - 1]][permute[0]];
+
 		return num;
 	}
-	
 
 	/*
 	 * nextPermutaion will return the next permutation of the input.
 	 */
-	public int[] getLexes(int[] currentPermute) {
+	public static int[] getLexes(int[] currentPermute) {
 		currentPermute = next_permutation(currentPermute);
 		return currentPermute;
 	}
@@ -242,13 +285,12 @@ public class TSPSolver {
 	 * When given an array of ints this will return the corresponding symbols
 	 * from a long list of symbols to indicate which order jumps are made in.
 	 */
-	public String MatrixLineToString(int[] matrixJumps) {
+	public static String MatrixLineToString(int[] matrixJumps) {
 		String alteredMatrixLine = "";
 		String lineValues = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789)!@#$%^&*(";
 
 		for (int i = 0; i < matrixJumps.length; i++) {
-			alteredMatrixLine += lineValues.substring(matrixJumps[i],
-					matrixJumps[i] + 1) + " ";
+			alteredMatrixLine += lineValues.substring(matrixJumps[i], matrixJumps[i] + 1) + " ";
 		}
 		alteredMatrixLine += alteredMatrixLine.substring(0, 1);
 
@@ -260,7 +302,7 @@ public class TSPSolver {
 	 * method requirements and then converts it into a new int[][] matrix. It
 	 * then returns the matrix.
 	 */
-	public int[][] StringToIntMatrix(String matrixString) {
+	public static int[][] StringToIntMatrix(String matrixString) {
 		int[][] matrix;
 		String[] singleMatrixLine;
 		String[] matrixLinesArray;
@@ -283,14 +325,13 @@ public class TSPSolver {
 	 * a variable after attaching a newline character to the end of the line.
 	 * This variable is then returned for the use of the rest of the program.
 	 */
-	public String fileReadIn() throws FileNotFoundException {
+	public static String fileReadIn() throws FileNotFoundException {
 		Scanner inputGetter = new Scanner(System.in);
 		Scanner sc;
 		String fileName = "", inputArrayString = "";
 		File file;
 
-		System.out
-				.print("Please enter the name of the file in which the array is stored: ");
+		System.out.print("Please enter the name of the file in which the array is stored: ");
 		fileName = inputGetter.nextLine();
 		file = new File(fileName);
 		sc = new Scanner(file);
@@ -303,18 +344,6 @@ public class TSPSolver {
 		inputGetter.close();
 
 		return inputArrayString;
-	}
-
-	/*
-	 * The factorial method will return the factorial of any int in the method's
-	 * input.
-	 */
-	public static long factorial(long n) {
-		long fact = 1; // this will be the result
-		for (long i = 1; i <= n; i++) {
-			fact *= i;
-		}
-		return fact;
 	}
 
 	/*
@@ -339,7 +368,7 @@ public class TSPSolver {
 				break;
 		}
 		if (i < 0) {
-			//System.out.println("End");
+			// System.out.println("End");
 			// System.exit(0);
 			return array;
 		}
@@ -364,56 +393,56 @@ public class TSPSolver {
 		}
 		return str;
 	}
-	
-	public static void insertionSort(int[] permute, int position){
+
+	public static void insertionSort(int[] permute, int position) {
 		/*
-		 * This code is based on the implementation shown in Java Foundations Second Edition
+		 * This code is based on the implementation shown in Java Foundations
+		 * Second Edition
 		 */
 		position++;
 
-			for(int l=position;l<permute.length;l++){
-				int key = permute[l];
-				int p = l;
-				
-				while(p > position &&permute[p-1] <= key){
-					permute[p] = permute[p-1];
-					p--;
-				}
-				
-				permute[p] = key;
+		for (int l = position; l < permute.length; l++) {
+			int key = permute[l];
+			int p = l;
+
+			while (p > position && permute[p - 1] <= key) {
+				permute[p] = permute[p - 1];
+				p--;
 			}
+
+			permute[p] = key;
+		}
 	}
-	
-	public static void upInsertionSort(int[] permute, int position){
+
+	public static void upInsertionSort(int[] permute, int position) {
 		/*
-		 * This code is based on the implementation shown in Java Foundations Second Edition
+		 * This code is based on the implementation shown in Java Foundations
+		 * Second Edition
 		 */
 		position++;
 
-			for(int l=position;l<permute.length;l++){
-				int key = permute[l];
-				int p = l;
-				
-				while(p < position &&permute[p-1] >= key){
-					permute[p] = permute[p-1];
-					p--;
-				}
-				
-				permute[p] = key;
+		for (int l = position; l < permute.length; l++) {
+			int key = permute[l];
+			int p = l;
+
+			while (p < position && permute[p - 1] >= key) {
+				permute[p] = permute[p - 1];
+				p--;
 			}
+
+			permute[p] = key;
+		}
 	}
-	
-	public static void bubbleSort(int[] a, int position)
-	{
+
+	public static void bubbleSort(int[] a, int position) {
 		int out, in;
 		position++;
-		for(out=a.length-1; out>position; out--)
-			for(in=position; in<out; in++)
-				if(a[in] > a[in+1])
-				{
+		for (out = a.length - 1; out > position; out--)
+			for (in = position; in < out; in++)
+				if (a[in] > a[in + 1]) {
 					int temp = a[in];
-					a[in] = a[in+1];
-					a[in+1] = temp;
+					a[in] = a[in + 1];
+					a[in + 1] = temp;
 				}
 	}
 

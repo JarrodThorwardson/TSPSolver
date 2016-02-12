@@ -8,9 +8,9 @@ import java.util.Random;
 public class MatrixGeneration {
 
 	public static void main(String[] args) throws IOException {
-		int cities = 20;
-		int version = 5;
-		int noGo = 100000;
+		int cities = 19;
+		int version = 1;
+		int noGo = 1000;
 		Random rng = new Random();
 		StringBuilder matrixString = new StringBuilder();
 		int[][] cityMatrix = new int[cities][cities];
@@ -24,9 +24,13 @@ public class MatrixGeneration {
 				if (i==j){
 					cityMatrix[i][j] = noGo;
 				} else{
-					mirror =  rng.nextInt(49) + 1;
+					mirror =  rng.nextInt(9) + 1;
 					cityMatrix[i][j] = mirror;
 					cityMatrix[j][i] = mirror;
+					/*if(rng.nextInt(49) > 30){
+						cityMatrix[i][j] = noGo;
+						cityMatrix[j][i] = noGo;
+					}*/
 				}
 			}
 		}
