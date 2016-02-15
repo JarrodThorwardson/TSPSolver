@@ -12,11 +12,13 @@ public class TSPSolver {
 	private static volatile long runTime;
 	private static volatile int[][] matrix, pathArray, nnArray;
 	private static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
+	private static boolean distributed;
 
-	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel) {
+	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel, boolean multiMachine) {
 		matrix = inputMatrix.clone();
 		initialPermute = inputPermute.clone();
 		watchperson = indexSentinel;
+		distributed = multiMachine;
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
@@ -25,6 +27,7 @@ public class TSPSolver {
 		int[][] start;
 		int[] startHere;
 		int[] shortest;
+		boolean test = false;
 		String matrixString = fileReadIn();
 
 		start = StringToIntMatrix(matrixString);
@@ -33,7 +36,7 @@ public class TSPSolver {
 			startHere[i] = i;
 		}
 
-		tsp = new TSPSolver(start, startHere, watchPersonToo);
+		tsp = new TSPSolver(start, startHere, watchPersonToo, test);
 		shortest = tsp.solve();
 
 		System.out.println("Best path:\t" + MatrixLineToString(shortest) + "\tBest Distance:\t"
@@ -92,7 +95,7 @@ public class TSPSolver {
 		bestValue = Integer.MAX_VALUE;
 
 		// Launching sufficient threads, assuming a symmetric graph.
-		if (symmetryCheck(matrix)) {
+		if (!distributed && symmetryCheck(matrix)) {
 			threadCeiling = Math.ceil(currentPermute.length / 2.0);
 		} else {
 			threadCeiling = currentPermute.length;
@@ -110,10 +113,11 @@ public class TSPSolver {
 		swapIndex = bestArray.clone();
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
-		for (int i = 0; i < threadCount; i++) {
-			currentPermute[watchperson] = swapIndex[i + 1];
-			currentPermute[i + 1] = swapIndex[watchperson];
+		for (int i = watchperson; i < threadCount; i++) {
+			currentPermute[watchperson] = swapIndex[i];
+			currentPermute[i] = swapIndex[watchperson];
 			bubbleSort(currentPermute, watchperson);
+			System.out.println("Debug test: " + MatrixLineToString(currentPermute) + " iteration: " + i);
 			final int[] threadPermute = currentPermute.clone();
 			final int threadID = i;
 			Thread aThread = new Thread(new Runnable() {
@@ -162,6 +166,7 @@ public class TSPSolver {
 		}
 
 		for (int[] path : pathArray) {
+			// first array is not written to programatically.
 			if (threadablePermuteValue(path, matrix) < bestValue) {
 				bestArray = path.clone();
 				bestValue = threadablePermuteValue(path, matrix);
