@@ -8,7 +8,7 @@ import java.util.Random;
 public class MatrixGeneration {
 
 	public static void main(String[] args) throws IOException {
-		int cities = 19;
+		int cities = 70;
 		int version = 1;
 		int noGo = 1000;
 		Random rng = new Random();

@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-public class TSPSolver {
+public class TSPSolver implements java.io.Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5685114427785070701L;
 	private static volatile int[] bestArray, swapIndex, initialPermute;
 	private static volatile long time;
 	private static volatile long runTime;
