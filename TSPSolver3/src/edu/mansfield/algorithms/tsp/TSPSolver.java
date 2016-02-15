@@ -113,11 +113,10 @@ public class TSPSolver {
 		swapIndex = bestArray.clone();
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
-		for (int i = watchperson; i < threadCount; i++) {
-			currentPermute[watchperson] = swapIndex[i];
-			currentPermute[i] = swapIndex[watchperson];
+		for (int i = 0; i < threadCount; i++) {
+			currentPermute[watchperson] = swapIndex[i+watchperson];
+			currentPermute[i+watchperson] = swapIndex[watchperson];
 			bubbleSort(currentPermute, watchperson);
-			System.out.println("Debug test: " + MatrixLineToString(currentPermute) + " iteration: " + i);
 			final int[] threadPermute = currentPermute.clone();
 			final int threadID = i;
 			Thread aThread = new Thread(new Runnable() {
@@ -182,6 +181,7 @@ public class TSPSolver {
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
 		lowEstimate = nnSolver.oldNearestNeighborRun(evalMatrix);
 		nnArray = nnSolver.oldNearestNeighborRunArray(evalMatrix);
+		//magic constant determined by informal testing.
 		if (nnArray[0].length > 17) {
 			nearestWatchPerson = nnArray[0].length - 11;
 		} else {
