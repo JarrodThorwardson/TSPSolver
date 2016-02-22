@@ -8,7 +8,7 @@ import java.util.Random;
 public class MatrixGeneration {
 
 	public static void main(String[] args) throws IOException {
-		int cities = 70;
+		int cities = 27;
 		int version = 1;
 		int noGo = 1000;
 		Random rng = new Random();
@@ -24,7 +24,7 @@ public class MatrixGeneration {
 				if (i==j){
 					cityMatrix[i][j] = noGo;
 				} else{
-					mirror =  rng.nextInt(9) + 1;
+					mirror =  rng.nextInt(49) + 1;
 					cityMatrix[i][j] = mirror;
 					cityMatrix[j][i] = mirror;
 					/*if(rng.nextInt(49) > 30){
