@@ -2,8 +2,9 @@ package edu.mansfield.algorithms.tsp;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class TSPSolver implements java.io.Serializable{
@@ -62,7 +63,7 @@ public class TSPSolver implements java.io.Serializable{
 
 	public int[] solve() {
 		time = System.currentTimeMillis();
-		threadLaunchingPermuteFinder();
+		bestArray = threadLaunchingPermuteFinder();
 		runTime = System.currentTimeMillis() - time;
 		return bestArray;
 	}
@@ -92,6 +93,7 @@ public class TSPSolver implements java.io.Serializable{
 		 * terminates at: 354210 450123 = 401235 terminates at: 453210 501234 =
 		 * 501234 terminates at: 543210
 		 */
+		int cores = Runtime.getRuntime().availableProcessors();
 		int[] currentPermute = new int[matrix[0].length];
 		double threadCeiling = 0;
 		// initializing currentPermute with a valid path
@@ -117,7 +119,8 @@ public class TSPSolver implements java.io.Serializable{
 		// Many thanks to Squirtle Squad for examples of how to launch multiple
 		// threads in Java.
 		swapIndex = bestArray.clone();
-		ArrayList<Thread> threads = new ArrayList<Thread>();
+		
+		ExecutorService threading = Executors.newFixedThreadPool(cores);
 
 		for (int i = 0; i < threadCount; i++) {
 			currentPermute[watchperson] = swapIndex[i+watchperson];
@@ -125,7 +128,7 @@ public class TSPSolver implements java.io.Serializable{
 			bubbleSort(currentPermute, watchperson);
 			final int[] threadPermute = currentPermute.clone();
 			final int threadID = i;
-			Thread aThread = new Thread(new Runnable() {
+			threading.execute(new Runnable() {
 				@Override
 				public void run() {
 					try {
@@ -138,46 +141,29 @@ public class TSPSolver implements java.io.Serializable{
 				}
 			});
 
-			System.out.println("Current path: " + MatrixLineToString(currentPermute) + " Current distance: "
-					+ threadablePermuteValue(currentPermute, matrix));
+			/*System.out.println("Current path: " + MatrixLineToString(currentPermute) + " Current distance: "
+					+ threadablePermuteValue(currentPermute, matrix));*/
 			currentPermute = swapIndex.clone();
-			aThread.start();
-			threads.add(aThread);
+			/*aThread.start();
+			threads.add(aThread);*/
 
 		}
-
-		/*boolean threadsAreAlive;
-
-		do {
-			threadsAreAlive = false;
-			for (Thread thread : threads) {
-				if (thread.isAlive()) {
-					threadsAreAlive = true;
-				}
-			}
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		} while (threadsAreAlive);*/
-
-		for (Thread thread : threads) {
-			try {
-				thread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		
+		threading.shutdown();
+		
+		while(!threading.isTerminated()){
+			//wait until it is
 		}
+
 
 		for (int[] path : pathArray) {
 			// first array is not written to programatically.
-			if (threadablePermuteValue(path, matrix) < bestValue) {
+			if (threadablePermuteValue(path, matrix) <= bestValue) {
 				bestArray = path.clone();
 				bestValue = threadablePermuteValue(path, matrix);
 			}
-			System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
-					+ threadablePermuteValue(path, matrix));
+			/*System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
+					+ threadablePermuteValue(path, matrix));*/
 		}
 
 		return bestArray;
@@ -243,8 +229,8 @@ public class TSPSolver implements java.io.Serializable{
 			// System.out.println("\tDistance:\t" + currentValue);
 			initial = getLexes(initial);
 		}
-		System.out.println("Thread #" + sentinel + " done: " + MatrixLineToString(bestArray1) + " Distance: "
-				+ threadablePermuteValue(bestArray1, clonedMatrix));
+		/*System.out.println("Thread #" + sentinel + " done: " + MatrixLineToString(bestArray1) + " Distance: "
+				+ threadablePermuteValue(bestArray1, clonedMatrix));*/
 		return bestArray1;
 	}
 
