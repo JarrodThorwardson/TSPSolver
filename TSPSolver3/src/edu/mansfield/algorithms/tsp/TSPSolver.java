@@ -18,16 +18,18 @@ public class TSPSolver implements java.io.Serializable{
 	private static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
 	private static boolean distributed;
 
-	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel, boolean multiMachine) {
+	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel, int estimate, boolean multiMachine) {
 		matrix = inputMatrix.clone();
 		initialPermute = inputPermute.clone();
 		watchperson = indexSentinel;
+		lowEstimate = estimate;
 		distributed = multiMachine;
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp;
 		int watchPersonToo = 1;
+		int firstEstimate;
 		int[][] start;
 		int[] startHere;
 		int[] shortest;
@@ -36,11 +38,12 @@ public class TSPSolver implements java.io.Serializable{
 
 		start = StringToIntMatrix(matrixString);
 		startHere = new int[start[0].length];
+		firstEstimate = lowEstimateEval(start);
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
 
-		tsp = new TSPSolver(start, startHere, watchPersonToo, test);
+		tsp = new TSPSolver(start, startHere, watchPersonToo, firstEstimate, test);
 		shortest = tsp.solve();
 
 		System.out.println("Best path:\t" + MatrixLineToString(shortest) + "\tBest Distance:\t"
@@ -59,7 +62,6 @@ public class TSPSolver implements java.io.Serializable{
 
 	public int[] solve() {
 		time = System.currentTimeMillis();
-		lowEstimate = lowEstimateEval(matrix);
 		threadLaunchingPermuteFinder();
 		runTime = System.currentTimeMillis() - time;
 		return bestArray;
@@ -100,9 +102,9 @@ public class TSPSolver implements java.io.Serializable{
 
 		// Launching sufficient threads, assuming a symmetric graph.
 		if (!distributed && symmetryCheck(matrix)) {
-			threadCeiling = Math.ceil(currentPermute.length / 2.0);
+			threadCeiling = Math.ceil((currentPermute.length - watchperson) / 2.0);
 		} else {
-			threadCeiling = currentPermute.length;
+			threadCeiling = currentPermute.length - watchperson;
 		}
 
 		threadCount = (int) threadCeiling;
@@ -144,7 +146,7 @@ public class TSPSolver implements java.io.Serializable{
 
 		}
 
-		boolean threadsAreAlive;
+		/*boolean threadsAreAlive;
 
 		do {
 			threadsAreAlive = false;
@@ -158,7 +160,7 @@ public class TSPSolver implements java.io.Serializable{
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		} while (threadsAreAlive);
+		} while (threadsAreAlive);*/
 
 		for (Thread thread : threads) {
 			try {
