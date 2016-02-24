@@ -27,6 +27,30 @@ public class TSPSolver implements java.io.Serializable{
 		distributed = multiMachine;
 	}
 
+	public int[] getInitialPermute() {
+		return initialPermute;
+	}
+
+	public void setInitialPermute(int[] initialPermute) {
+		TSPSolver.initialPermute = initialPermute;
+	}
+
+	public int getLowEstimate() {
+		return lowEstimate;
+	}
+
+	public void setLowEstimate(int lowEstimate) {
+		TSPSolver.lowEstimate = lowEstimate;
+	}
+
+	public int getWatchperson() {
+		return watchperson;
+	}
+
+	public void setWatchperson(int watchperson) {
+		TSPSolver.watchperson = watchperson;
+	}
+
 	public static void main(String[] args) throws FileNotFoundException {
 		TSPSolver tsp;
 		int watchPersonToo = 1;

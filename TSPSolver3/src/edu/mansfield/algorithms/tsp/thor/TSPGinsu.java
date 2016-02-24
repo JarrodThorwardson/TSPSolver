@@ -8,7 +8,7 @@ import edu.mansfield.algorithms.tsp.TSPSolver;
 public class TSPGinsu {
 
 	public static void main(String[] args) throws FileNotFoundException {
-		long time, runTime;
+		long time, runTime, tempTime, tempRunTime;
 		TSPSolver tsp;
 		int watchPersonToo = 1;
 		int watchPersonAlso = 2;
@@ -38,15 +38,20 @@ public class TSPGinsu {
 			tspsPlural = startHere.length;
 		}
 		
+		tsp = new TSPSolver(start, startHere, watchPersonAlso, currentEstimate, test);
+		
 		for(int i=0; i<tspsPlural;i++){
 			swapIndexExtra[watchPersonToo] = swapIndex[i+watchPersonToo];
 			swapIndexExtra[i+watchPersonToo] = swapIndex[watchPersonToo];
 			TSPSolver.bubbleSort(swapIndexExtra, watchPersonToo);
 			startHere = swapIndexExtra.clone();
 			swapIndexExtra = swapIndex.clone();
-			
-			tsp = new TSPSolver(start, startHere, watchPersonAlso, currentEstimate, test);
+			tempTime = System.currentTimeMillis();
+			tsp.setInitialPermute(startHere);
+			tsp.setLowEstimate(currentEstimate);
 			shorterOne = tsp.solve();
+			tempRunTime = System.currentTimeMillis() - tempTime;
+			System.out.println("Temp run time in milliseconds: " + tempRunTime);
 			if(currentEstimate>TSPSolver.threadablePermuteValue(shorterOne, start)){
 				currentEstimate = TSPSolver.threadablePermuteValue(shorterOne, start);
 				shortest = shorterOne.clone();
