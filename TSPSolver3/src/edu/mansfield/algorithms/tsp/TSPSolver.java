@@ -67,6 +67,13 @@ public class TSPSolver implements java.io.Serializable{
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
+		
+		//forcefeeding it the problematic subset
+		/*startHere[1] = 9;
+		startHere[9] = 1;
+		bubbleSort(startHere, watchPersonToo);*/
+		
+		System.out.println("Matrix symmetry: " + symmetryCheck(start));
 
 		tsp = new TSPSolver(start, startHere, watchPersonToo, firstEstimate, test);
 		shortest = tsp.solve();
@@ -186,8 +193,8 @@ public class TSPSolver implements java.io.Serializable{
 				bestArray = path.clone();
 				bestValue = threadablePermuteValue(path, matrix);
 			}
-			/*System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
-					+ threadablePermuteValue(path, matrix));*/
+			System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
+					+ threadablePermuteValue(path, matrix));
 		}
 
 		return bestArray;
@@ -234,6 +241,9 @@ public class TSPSolver implements java.io.Serializable{
 		// infrequently as seen below,
 		// results in far too many issues with threads waiting their turn to be
 		// worthwhile at 19 cities.
+		
+		System.out.println("Task #" + sentinel + " started: " + MatrixLineToString(initial) + " Distance: "
+				+ threadablePermuteValue(initial, clonedMatrix));
 
 		while (initial[sentinelIndex] == sentinel) {
 			initial = threadablePermuteBranchBound(initial, clonedMatrix, estimate);
@@ -253,8 +263,8 @@ public class TSPSolver implements java.io.Serializable{
 			// System.out.println("\tDistance:\t" + currentValue);
 			initial = getLexes(initial);
 		}
-		/*System.out.println("Thread #" + sentinel + " done: " + MatrixLineToString(bestArray1) + " Distance: "
-				+ threadablePermuteValue(bestArray1, clonedMatrix));*/
+		System.out.println("Task #" + sentinel + " done: " + MatrixLineToString(initial) + " Distance: "
+				+ threadablePermuteValue(initial, clonedMatrix));
 		return bestArray1;
 	}
 
@@ -268,12 +278,12 @@ public class TSPSolver implements java.io.Serializable{
 		for (int i = 0; i < sortable.length - 1; i++) {
 			num += matrix[sortable[i]][sortable[i + 1]];
 			if (num > estimate) {
-				insertionSort(sortable, i);
+				insertionSort(sortable, i+1);
 				return sortable;
 			}
 		}
 
-		num += matrix[sortable[sortable.length - 1]][sortable[0]];
+		//num += matrix[sortable[sortable.length - 1]][sortable[0]];
 
 		return sortable;
 	}

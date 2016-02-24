@@ -46,11 +46,17 @@ public class TSPGinsu {
 			TSPSolver.bubbleSort(swapIndexExtra, watchPersonToo);
 			startHere = swapIndexExtra.clone();
 			swapIndexExtra = swapIndex.clone();
+			
 			tempTime = System.currentTimeMillis();
+			
 			tsp.setInitialPermute(startHere);
 			tsp.setLowEstimate(currentEstimate);
 			shorterOne = tsp.solve();
+			
 			tempRunTime = System.currentTimeMillis() - tempTime;
+			System.out.println("Starting path:\t" + TSPSolver.MatrixLineToString(startHere) + "\tStarting Distance:\t"
+			+ TSPSolver.threadablePermuteValue(startHere, start));
+			
 			System.out.println("Temp run time in milliseconds: " + tempRunTime);
 			if(currentEstimate>TSPSolver.threadablePermuteValue(shorterOne, start)){
 				currentEstimate = TSPSolver.threadablePermuteValue(shorterOne, start);
