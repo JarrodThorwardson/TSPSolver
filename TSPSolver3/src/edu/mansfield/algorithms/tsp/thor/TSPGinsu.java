@@ -23,7 +23,7 @@ public class TSPGinsu {
 		time = System.currentTimeMillis();
 
 		start = TSPSolver.StringToIntMatrix(matrixString);
-		currentEstimate = Integer.MAX_VALUE;//TSPSolver.lowEstimateEval(start);
+		currentEstimate = TSPSolver.lowEstimateEval(start);
 		startHere = new int[start[0].length];
 		shorterOne = new int[start[0].length];
 		for (int i = 0; i < startHere.length; i++) {

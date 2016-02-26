@@ -64,7 +64,7 @@ public class TSPSolver implements java.io.Serializable{
 
 		start = StringToIntMatrix(matrixString);
 		startHere = new int[start[0].length];
-		firstEstimate = Integer.MAX_VALUE;//lowEstimateEval(start);
+		firstEstimate = 1000;//lowEstimateEval(start);
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
@@ -149,36 +149,39 @@ public class TSPSolver implements java.io.Serializable{
 		final int[][] maybeReadIssue = matrix.clone();
 		final int watcher = watchperson;
 		final int estimated = lowEstimate;
+		swapIndex = bestArray.clone();
+		
+		for (int i=0;i<threadCount;i++){
+			currentPermute[watchperson] = swapIndex[i+watchperson];
+			currentPermute[i+watchperson] = swapIndex[watchperson];
+			TSPSolver.bubbleSort(currentPermute, watchperson);
+			singles[i] = new TSPSingle(maybeReadIssue, currentPermute, watcher, estimated);
+			System.out.println("Current path: " + TSPSolver.MatrixLineToString(currentPermute) + " Current distance: "
+					+ TSPSolver.threadablePermuteValue(currentPermute, matrix));
+			currentPermute = swapIndex.clone();
+		}
+		
 
 		System.out.println("Best Distance to Start: " + lowEstimate);
 
 		// Many thanks to Squirtle Squad for examples of how to launch multiple
 		// threads in Java.
-		swapIndex = bestArray.clone();
 		
 		ExecutorService threading = Executors.newFixedThreadPool(cores);
 
 		for (int i = 0; i < threadCount; i++) {
-			currentPermute[watchperson] = swapIndex[i+watchperson];
-			currentPermute[i+watchperson] = swapIndex[watchperson];
-			TSPSolver.bubbleSort(currentPermute, watchperson);
-			final int[] threadPermute = currentPermute.clone();
 			final int threadID = i;
-			singles[threadID] = new TSPSingle(maybeReadIssue, threadPermute, watcher, estimated);
 			threading.execute(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						pathArray[threadID] = singles[threadID].solve().clone();
+						pathArray[threadID] = singles[threadID].solve();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 			});
 
-			System.out.println("Current path: " + TSPSolver.MatrixLineToString(currentPermute) + " Current distance: "
-					+ TSPSolver.threadablePermuteValue(currentPermute, matrix));
-			currentPermute = swapIndex.clone();
 			/*aThread.start();
 			threads.add(aThread);*/
 

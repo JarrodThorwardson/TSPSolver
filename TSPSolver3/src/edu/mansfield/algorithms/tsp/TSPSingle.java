@@ -5,15 +5,16 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-public class TSPSingle{
+public class TSPSingle implements Runnable{
 	
 	private int[][] matrix;
 	private int[] initialPermute, bestArray;
-	private int watchPerson, lowEstimate, currentValue, sentinel;
+	private int watchPerson, lowEstimate, sentinel;
 
 	public TSPSingle(int[][] inputMatrix, int[] inputPermute, int indexSentinel, int estimate) {
 		matrix = inputMatrix.clone();
 		initialPermute = inputPermute.clone();
+		bestArray = inputPermute.clone();
 		watchPerson = indexSentinel;
 		lowEstimate = estimate;
 		sentinel = inputPermute[indexSentinel];
@@ -72,10 +73,6 @@ public class TSPSingle{
 
 		while (initialPermute[watchPerson] == sentinel) {
 			initialPermute = this.permuteBranchBound();
-			if (currentValue < lowEstimate) {
-				bestArray = initialPermute.clone();
-				lowEstimate = currentValue;
-			}
 			initialPermute = this.getLexes(initialPermute);
 		}
 	}
@@ -94,7 +91,10 @@ public class TSPSingle{
 		}
 
 		num += matrix[initialPermute[initialPermute.length - 1]][initialPermute[0]];
-		currentValue = num;
+		if (num < lowEstimate) {
+			bestArray = initialPermute.clone();
+			lowEstimate = num;
+		}
 		
 		return initialPermute;
 	}
@@ -207,6 +207,12 @@ public class TSPSingle{
 			permute[p] = key;
 		}
 		return permute;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
