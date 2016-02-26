@@ -23,7 +23,7 @@ public class TSPGinsu {
 		time = System.currentTimeMillis();
 
 		start = TSPSolver.StringToIntMatrix(matrixString);
-		currentEstimate = TSPSolver.lowEstimateEval(start);
+		currentEstimate = Integer.MAX_VALUE;//TSPSolver.lowEstimateEval(start);
 		startHere = new int[start[0].length];
 		shorterOne = new int[start[0].length];
 		for (int i = 0; i < startHere.length; i++) {
@@ -43,14 +43,14 @@ public class TSPGinsu {
 		for(int i=0; i<tspsPlural;i++){
 			swapIndexExtra[watchPersonToo] = swapIndex[i+watchPersonToo];
 			swapIndexExtra[i+watchPersonToo] = swapIndex[watchPersonToo];
-			TSPSolver.bubbleSort(swapIndexExtra, watchPersonToo);
+			TSPSolver.upInsertionSort(swapIndexExtra, watchPersonToo+1);
 			startHere = swapIndexExtra.clone();
 			swapIndexExtra = swapIndex.clone();
 			
 			tempTime = System.currentTimeMillis();
 			
 			tsp.setInitialPermute(startHere);
-			tsp.setLowEstimate(currentEstimate);
+			//tsp.setLowEstimate(currentEstimate);
 			shorterOne = tsp.solve();
 			
 			tempRunTime = System.currentTimeMillis() - tempTime;

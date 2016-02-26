@@ -18,6 +18,7 @@ public class TSPSolver implements java.io.Serializable{
 	private static volatile int[][] matrix, pathArray, nnArray;
 	private static volatile int bestValue, threadCount, lowEstimate, watchperson, nearestWatchPerson;
 	private static boolean distributed;
+	private static TSPSingle[] singles;
 
 	public TSPSolver(int[][] inputMatrix, int[] inputPermute, int indexSentinel, int estimate, boolean multiMachine) {
 		matrix = inputMatrix.clone();
@@ -63,7 +64,7 @@ public class TSPSolver implements java.io.Serializable{
 
 		start = StringToIntMatrix(matrixString);
 		startHere = new int[start[0].length];
-		firstEstimate = lowEstimateEval(start);
+		firstEstimate = Integer.MAX_VALUE;//lowEstimateEval(start);
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
@@ -134,7 +135,7 @@ public class TSPSolver implements java.io.Serializable{
 		bestValue = Integer.MAX_VALUE;
 
 		// Launching sufficient threads, assuming a symmetric graph.
-		if (!distributed && symmetryCheck(matrix)) {
+		if (!distributed && TSPSolver.symmetryCheck(matrix)) {
 			threadCeiling = Math.ceil((currentPermute.length - watchperson) / 2.0);
 		} else {
 			threadCeiling = currentPermute.length - watchperson;
@@ -144,6 +145,10 @@ public class TSPSolver implements java.io.Serializable{
 		// Arrays used to collect results from the various threads.
 		// valueArray = new int[threadCount];
 		pathArray = new int[threadCount][bestArray.length];
+		singles = new TSPSingle[threadCount];
+		final int[][] maybeReadIssue = matrix.clone();
+		final int watcher = watchperson;
+		final int estimated = lowEstimate;
 
 		System.out.println("Best Distance to Start: " + lowEstimate);
 
@@ -156,24 +161,23 @@ public class TSPSolver implements java.io.Serializable{
 		for (int i = 0; i < threadCount; i++) {
 			currentPermute[watchperson] = swapIndex[i+watchperson];
 			currentPermute[i+watchperson] = swapIndex[watchperson];
-			bubbleSort(currentPermute, watchperson);
+			TSPSolver.bubbleSort(currentPermute, watchperson);
 			final int[] threadPermute = currentPermute.clone();
 			final int threadID = i;
+			singles[threadID] = new TSPSingle(maybeReadIssue, threadPermute, watcher, estimated);
 			threading.execute(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						int[][] maybeReadIssue = matrix.clone();
-						pathArray[threadID] = threadablePermuteFinding(maybeReadIssue, threadPermute, lowEstimate,
-								watchperson).clone();
+						pathArray[threadID] = singles[threadID].solve().clone();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 			});
 
-			/*System.out.println("Current path: " + MatrixLineToString(currentPermute) + " Current distance: "
-					+ threadablePermuteValue(currentPermute, matrix));*/
+			System.out.println("Current path: " + TSPSolver.MatrixLineToString(currentPermute) + " Current distance: "
+					+ TSPSolver.threadablePermuteValue(currentPermute, matrix));
 			currentPermute = swapIndex.clone();
 			/*aThread.start();
 			threads.add(aThread);*/
@@ -189,12 +193,12 @@ public class TSPSolver implements java.io.Serializable{
 
 		for (int[] path : pathArray) {
 			// first array is not written to programatically.
-			if (threadablePermuteValue(path, matrix) <= bestValue) {
+			if (TSPSolver.threadablePermuteValue(path, matrix) <= bestValue) {
 				bestArray = path.clone();
-				bestValue = threadablePermuteValue(path, matrix);
+				bestValue = TSPSolver.threadablePermuteValue(path, matrix);
 			}
-			System.out.println("This path:\t" + MatrixLineToString(path) + "\tThis Distance:\t"
-					+ threadablePermuteValue(path, matrix));
+			System.out.println("This path:\t" + TSPSolver.MatrixLineToString(path) + "\tThis Distance:\t"
+					+ TSPSolver.threadablePermuteValue(path, matrix));
 		}
 
 		return bestArray;
@@ -212,16 +216,16 @@ public class TSPSolver implements java.io.Serializable{
 		}
 
 		for (int[] permutePath : nnArray) {
-			bubbleSort(permutePath, nearestWatchPerson);
-			permutePath = threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
+			TSPSolver.bubbleSort(permutePath, nearestWatchPerson);
+			permutePath = TSPSolver.threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
 
 			/*
 			 * System.out.println("Approximation path: " +
 			 * tsp.MatrixLineToString(permutePath) + " Approximation distance: "
 			 * + tsp.threadablePermuteValue(permutePath, matrix));
 			 */
-			if (threadablePermuteValue(permutePath, evalMatrix) < lowEstimate) {
-				lowEstimate = threadablePermuteValue(permutePath, evalMatrix);
+			if (TSPSolver.threadablePermuteValue(permutePath, evalMatrix) < lowEstimate) {
+				lowEstimate = TSPSolver.threadablePermuteValue(permutePath, evalMatrix);
 			}
 		}
 		return lowEstimate;
@@ -242,12 +246,12 @@ public class TSPSolver implements java.io.Serializable{
 		// results in far too many issues with threads waiting their turn to be
 		// worthwhile at 19 cities.
 		
-		System.out.println("Task #" + sentinel + " started: " + MatrixLineToString(initial) + " Distance: "
-				+ threadablePermuteValue(initial, clonedMatrix));
+		/*System.out.println("Task #" + sentinel + " started: " + MatrixLineToString(initial) + " Distance: "
+				+ threadablePermuteValue(initial, clonedMatrix));*/
 
 		while (initial[sentinelIndex] == sentinel) {
-			initial = threadablePermuteBranchBound(initial, clonedMatrix, estimate);
-			currentValue = threadablePermuteValue(initial, clonedMatrix);
+			initial = TSPSolver.threadablePermuteBranchBound(initial, clonedMatrix, estimate);
+			currentValue = TSPSolver.threadablePermuteValue(initial, clonedMatrix);
 			if (currentValue < bestValue1) {
 				bestArray1 = initial.clone();
 				bestValue1 = currentValue;
@@ -261,10 +265,10 @@ public class TSPSolver implements java.io.Serializable{
 			 */
 			// System.out.print(printArray(currentPermute));
 			// System.out.println("\tDistance:\t" + currentValue);
-			initial = getLexes(initial);
+			initial = TSPSolver.getLexes(initial);
 		}
-		System.out.println("Task #" + sentinel + " done: " + MatrixLineToString(initial) + " Distance: "
-				+ threadablePermuteValue(initial, clonedMatrix));
+		/*System.out.println("Task #" + sentinel + " done: " + MatrixLineToString(initial) + " Distance: "
+				+ threadablePermuteValue(initial, clonedMatrix));*/
 		return bestArray1;
 	}
 
@@ -278,7 +282,7 @@ public class TSPSolver implements java.io.Serializable{
 		for (int i = 0; i < sortable.length - 1; i++) {
 			num += matrix[sortable[i]][sortable[i + 1]];
 			if (num > estimate) {
-				insertionSort(sortable, i+1);
+				TSPSolver.insertionSort(sortable, i+1);
 				return sortable;
 			}
 		}
@@ -308,7 +312,7 @@ public class TSPSolver implements java.io.Serializable{
 	 * nextPermutaion will return the next permutation of the input.
 	 */
 	public static int[] getLexes(int[] currentPermute) {
-		currentPermute = next_permutation(currentPermute);
+		currentPermute = TSPSolver.next_permutation(currentPermute);
 		return currentPermute;
 	}
 
@@ -364,6 +368,9 @@ public class TSPSolver implements java.io.Serializable{
 
 		System.out.print("Please enter the name of the file in which the array is stored: ");
 		fileName = inputGetter.nextLine();
+		if (fileName.equalsIgnoreCase("")){
+			fileName = "15in.txt";
+		}
 		file = new File(fileName);
 		sc = new Scanner(file);
 
