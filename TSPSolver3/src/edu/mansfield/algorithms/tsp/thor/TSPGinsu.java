@@ -50,7 +50,7 @@ public class TSPGinsu {
 			tempTime = System.currentTimeMillis();
 			
 			tsp.setInitialPermute(startHere);
-			//tsp.setLowEstimate(currentEstimate);
+			tsp.setLowEstimate(currentEstimate);
 			shorterOne = tsp.solve();
 			
 			tempRunTime = System.currentTimeMillis() - tempTime;

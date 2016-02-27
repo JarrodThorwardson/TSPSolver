@@ -64,7 +64,7 @@ public class TSPSolver implements java.io.Serializable{
 
 		start = StringToIntMatrix(matrixString);
 		startHere = new int[start[0].length];
-		firstEstimate = 1000;//lowEstimateEval(start);
+		firstEstimate = lowEstimateEval(start);
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}

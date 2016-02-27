@@ -14,7 +14,7 @@ public class TSPSingle implements Runnable{
 	public TSPSingle(int[][] inputMatrix, int[] inputPermute, int indexSentinel, int estimate) {
 		matrix = inputMatrix.clone();
 		initialPermute = inputPermute.clone();
-		bestArray = inputPermute.clone();
+		bestArray = new int[inputPermute.length];
 		watchPerson = indexSentinel;
 		lowEstimate = estimate;
 		sentinel = inputPermute[indexSentinel];
@@ -40,7 +40,7 @@ public class TSPSingle implements Runnable{
 
 		start = StringToIntMatrix(matrixString);
 		startHere = new int[start[0].length];
-		firstEstimate = Integer.MAX_VALUE;
+		firstEstimate = 90;
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
@@ -72,8 +72,8 @@ public class TSPSingle implements Runnable{
 	private void permuteFinding() {
 
 		while (initialPermute[watchPerson] == sentinel) {
-			initialPermute = this.permuteBranchBound();
-			initialPermute = this.getLexes(initialPermute);
+			this.permuteBranchBound();
+			this.getLexes(initialPermute);
 		}
 	}
 	
@@ -85,7 +85,7 @@ public class TSPSingle implements Runnable{
 		for (int i = 0; i < initialPermute.length - 1; i++) {
 			num += matrix[initialPermute[i]][initialPermute[i + 1]];
 			if (num > lowEstimate) {
-				initialPermute = this.insertionSort(initialPermute, i+1);
+				this.insertionSort(initialPermute, i+1);
 				return initialPermute;
 			}
 		}
