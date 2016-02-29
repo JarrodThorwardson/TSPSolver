@@ -156,8 +156,8 @@ public class TSPSolver implements java.io.Serializable{
 			currentPermute[i+watchperson] = swapIndex[watchperson];
 			TSPSolver.bubbleSort(currentPermute, watchperson);
 			singles[i] = new TSPSingle(maybeReadIssue, currentPermute, watcher, estimated);
-			System.out.println("Current path: " + TSPSolver.MatrixLineToString(currentPermute) + " Current distance: "
-					+ TSPSolver.threadablePermuteValue(currentPermute, matrix));
+			/*System.out.println("Current path: " + TSPSolver.MatrixLineToString(currentPermute) + " Current distance: "
+					+ TSPSolver.threadablePermuteValue(currentPermute, matrix));*/
 			currentPermute = swapIndex.clone();
 		}
 		
@@ -200,8 +200,8 @@ public class TSPSolver implements java.io.Serializable{
 				bestArray = path.clone();
 				bestValue = TSPSolver.threadablePermuteValue(path, matrix);
 			}
-			System.out.println("This path:\t" + TSPSolver.MatrixLineToString(path) + "\tThis Distance:\t"
-					+ TSPSolver.threadablePermuteValue(path, matrix));
+			/*System.out.println("This path:\t" + TSPSolver.MatrixLineToString(path) + "\tThis Distance:\t"
+					+ TSPSolver.threadablePermuteValue(path, matrix));*/
 		}
 
 		return bestArray;

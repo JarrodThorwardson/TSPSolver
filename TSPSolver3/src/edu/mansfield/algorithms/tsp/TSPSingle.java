@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 public class TSPSingle implements Runnable {
 
 	private int[][] matrix;
-	private int[] initialPermute, bestArray, comparePermute, permuteSums;
+	private int[] initialPermute, bestArray, permuteSums;
 	private int watchPerson, lowEstimate, sentinel, compareSentinel;
 
 	public TSPSingle(int[][] inputMatrix, int[] inputPermute, int indexSentinel, int estimate) {
@@ -18,7 +18,6 @@ public class TSPSingle implements Runnable {
 		watchPerson = indexSentinel;
 		lowEstimate = estimate;
 		sentinel = inputPermute[indexSentinel];
-		comparePermute = initialPermute.clone();
 		permuteSums = new int[initialPermute.length];
 		permuteSums[0] = matrix[initialPermute[0]][initialPermute[1]];
 		for (int i = 1; i < permuteSums.length - 1; i++) {
@@ -141,7 +140,6 @@ public class TSPSingle implements Runnable {
 		if (compareSentinel == 0) {
 			permuteSums[0] = matrix[initialPermute[0]][initialPermute[1]];
 			for (int i = 1; i < permuteSums.length - 1; i++) {
-				comparePermute[i] = initialPermute[i];
 				permuteSums[i] = permuteSums[i - 1] + matrix[initialPermute[i]][initialPermute[i + 1]];
 				if (permuteSums[i] > lowEstimate) {
 					this.insertionSort(initialPermute, i + 1);
@@ -150,7 +148,6 @@ public class TSPSingle implements Runnable {
 			}
 		} else {
 			for (int i = compareSentinel; i < initialPermute.length - 1; i++) {
-				comparePermute[i] = initialPermute[i];
 				permuteSums[i] = permuteSums[i - 1] + matrix[initialPermute[i]][initialPermute[i + 1]];
 				if (permuteSums[i] > lowEstimate) {
 					this.insertionSort(initialPermute, i + 1);
