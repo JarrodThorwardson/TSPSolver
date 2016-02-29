@@ -175,7 +175,7 @@ public class TSPSolver implements java.io.Serializable{
 				@Override
 				public void run() {
 					try {
-						pathArray[threadID] = singles[threadID].solve();
+						pathArray[threadID] = singles[threadID].dynSolve();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
