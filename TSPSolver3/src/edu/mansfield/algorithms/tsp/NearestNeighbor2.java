@@ -2,13 +2,42 @@ package edu.mansfield.algorithms.tsp;
 
 import java.util.Stack;
 
-
 public class NearestNeighbor2 {
-	
-	public int[][] oldNearestNeighborRunArray(int[][] matrix){
+
+	public int[] newNearestNeighbor(int[][] matrix, int startCity) {
+		int[] reply = new int[matrix[0].length];
+		boolean[] visited = new boolean[matrix[0].length];
+		for (boolean visit : visited) {
+			visit = false;
+		}
+		int cityLowest, indexLowest, currentCity;
+		reply[0] = startCity;
+		visited[startCity] = true;
+		currentCity = startCity;
+		indexLowest = 0;
+
+		for (int i = 1; i < reply.length; i++) {
+			cityLowest = Integer.MAX_VALUE;
+			for (int j = 0; j < matrix[currentCity].length; j++) {
+				if ((visited[j] == false)) {
+					if (matrix[currentCity][j] < cityLowest) {
+						cityLowest = matrix[currentCity][j];
+						indexLowest = j;
+					}
+				}
+			}
+			visited[indexLowest] = true;
+			reply[i] = indexLowest;
+			currentCity = indexLowest;
+		}
+
+		return reply;
+	}
+
+	public int[][] oldNearestNeighborRunArray(int[][] matrix) {
 		Stack<Integer> stack = new Stack<Integer>();
 		int lowest = Integer.MAX_VALUE, pathLength = 0, lastPlace = 0;
-		int min  = Integer.MAX_VALUE;
+		int min = Integer.MAX_VALUE;
 		int arrayLength = matrix[0].length;
 		System.out.println("number of nodes: " + arrayLength);
 		int[][] bestPathHolder = new int[arrayLength][arrayLength];
@@ -29,9 +58,9 @@ public class NearestNeighbor2 {
 				i = 0;
 				min = Integer.MAX_VALUE;
 				while (i < arrayLength) {
-					if (matrix [element][i] > 1 && visited[i] == false) {
-						if (min > matrix [element][i]) {
-							min = matrix [element][i];
+					if (matrix[element][i] > 1 && visited[i] == false) {
+						if (min > matrix[element][i]) {
+							min = matrix[element][i];
 							destination = i;
 							minFlag = true;
 
@@ -58,7 +87,7 @@ public class NearestNeighbor2 {
 				}
 				stack.pop();
 			}
-			pathLength += matrix [bestPathHolder[k][0]][lastPlace];
+			pathLength += matrix[bestPathHolder[k][0]][lastPlace];
 			// System.out.println(bestPathHolder[0] + "\tDistance: " +
 			// pathLength);
 			if (pathLength <= lowest) {
@@ -66,14 +95,14 @@ public class NearestNeighbor2 {
 			}
 
 		}
-		System.out.println("Nearest Neighbor best run = " +  lowest);
+		System.out.println("Nearest Neighbor best run = " + lowest);
 		return bestPathHolder;
 	}
-	
-	public int oldNearestNeighborRun(int[][] matrix){
+
+	public int oldNearestNeighborRun(int[][] matrix) {
 		Stack<Integer> stack = new Stack<Integer>();
 		int lowest = Integer.MAX_VALUE, pathLength = 0, lastPlace = 0;
-		int min  = Integer.MAX_VALUE;
+		int min = Integer.MAX_VALUE;
 		int arrayLength = matrix[0].length;
 		System.out.println("number of nodes: " + arrayLength);
 		int[] bestPathHolder = new int[arrayLength];
@@ -94,9 +123,9 @@ public class NearestNeighbor2 {
 				i = 0;
 				min = Integer.MAX_VALUE;
 				while (i < arrayLength) {
-					if (matrix [element][i] > 1 && visited[i] == false) {
-						if (min > matrix [element][i]) {
-							min = matrix [element][i];
+					if (matrix[element][i] > 1 && visited[i] == false) {
+						if (min > matrix[element][i]) {
+							min = matrix[element][i];
 							destination = i;
 							minFlag = true;
 
@@ -123,7 +152,7 @@ public class NearestNeighbor2 {
 				}
 				stack.pop();
 			}
-			pathLength += matrix [bestPathHolder[0]][lastPlace];
+			pathLength += matrix[bestPathHolder[0]][lastPlace];
 			// System.out.println(bestPathHolder[0] + "\tDistance: " +
 			// pathLength);
 			if (pathLength <= lowest) {
@@ -131,10 +160,8 @@ public class NearestNeighbor2 {
 			}
 
 		}
-		System.out.println("Nearest Neighbor best run = " +  lowest);
+		System.out.println("Nearest Neighbor best run = " + lowest);
 		return lowest;
 	}
-	
-	
 
 }
