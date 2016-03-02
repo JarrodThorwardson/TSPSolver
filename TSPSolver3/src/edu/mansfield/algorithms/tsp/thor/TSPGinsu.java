@@ -14,9 +14,9 @@ public class TSPGinsu {
 		int watchPersonAlso = 2;
 		int currentEstimate;
 		int[][] start = null;
-		int[] shorterOne = null;
+		int[][] shorterOne = null;
 		int[] startHere, swapIndex, swapIndexExtra = null;
-		int[] shortest = null;
+		int[] shortest;
 		boolean test = true;
 		int tspsPlural;
 		String matrixString = TSPSolver.fileReadIn();
@@ -25,7 +25,6 @@ public class TSPGinsu {
 		start = TSPSolver.StringToIntMatrix(matrixString);
 		currentEstimate = TSPSolver.lowEstimateEval(start);
 		startHere = new int[start[0].length];
-		shorterOne = new int[start[0].length];
 		for (int i = 0; i < startHere.length; i++) {
 			startHere[i] = i;
 		}
@@ -38,6 +37,8 @@ public class TSPGinsu {
 			tspsPlural = startHere.length - 1;
 		}
 		tspsPlural = startHere.length - 1;
+		shorterOne = new int[tspsPlural][start[0].length];
+		shortest = new int[start[0].length];
 		tsp = new TSPSolver(start, startHere, watchPersonAlso, currentEstimate, test);
 		
 		for(int i=0; i<tspsPlural;i++){
@@ -51,16 +52,17 @@ public class TSPGinsu {
 			
 			tsp.setInitialPermute(startHere);
 			tsp.setLowEstimate(currentEstimate);
-			shorterOne = tsp.solve();
+			tsp = new TSPSolver(start, startHere, watchPersonAlso, currentEstimate, test);
+			shorterOne[i] = tsp.solve();
 			
 			tempRunTime = System.currentTimeMillis() - tempTime;
 			System.out.println("Starting path:\t" + TSPSolver.MatrixLineToString(startHere) + "\tStarting Distance:\t"
 			+ TSPSolver.threadablePermuteValue(startHere, start));
 			
 			System.out.println("Temp run time in milliseconds: " + tempRunTime);
-			if(currentEstimate>=TSPSolver.threadablePermuteValue(shorterOne, start)){
-				currentEstimate = TSPSolver.threadablePermuteValue(shorterOne, start);
-				shortest = shorterOne.clone();
+			if(currentEstimate>=TSPSolver.threadablePermuteValue(shorterOne[i], start)){
+				currentEstimate = TSPSolver.threadablePermuteValue(shorterOne[i], start);
+				shortest = shorterOne[i].clone();
 			}
 		}
 		runTime = System.currentTimeMillis() - time;

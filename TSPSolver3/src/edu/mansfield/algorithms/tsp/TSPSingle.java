@@ -137,7 +137,7 @@ public class TSPSingle implements Runnable {
 	private void dynBranchBound() {
 		/* Opportunity for linear/dynamic programming in this method. */
 
-		if (compareSentinel == 0) {
+		if (compareSentinel <= 0) {
 			permuteSums[0] = matrix[initialPermute[0]][initialPermute[1]];
 			for (int i = 1; i < permuteSums.length - 1; i++) {
 				permuteSums[i] = permuteSums[i - 1] + matrix[initialPermute[i]][initialPermute[i + 1]];
