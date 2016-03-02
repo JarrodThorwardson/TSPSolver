@@ -35,9 +35,9 @@ public class TSPGinsu {
 		if (TSPSolver.symmetryCheck(start)) {
 			tspsPlural = (int) Math.ceil(startHere.length / 2.0);
 		} else {
-			tspsPlural = startHere.length;
+			tspsPlural = startHere.length - 1;
 		}
-		
+		tspsPlural = startHere.length - 1;
 		tsp = new TSPSolver(start, startHere, watchPersonAlso, currentEstimate, test);
 		
 		for(int i=0; i<tspsPlural;i++){

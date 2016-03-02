@@ -209,6 +209,7 @@ public class TSPSolver implements java.io.Serializable{
 
 	public static int lowEstimateEval(int[][] evalMatrix) {
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
+		TSPSingle quicker;
 		lowEstimate = nnSolver.newNearestNeighborValue(evalMatrix);
 		//int otherEstimate = nnSolver.newNearestNeighborValue(evalMatrix);
 		nnArray = nnSolver.newNearestNeighborArray(evalMatrix);
@@ -233,7 +234,9 @@ public class TSPSolver implements java.io.Serializable{
 
 		for (int[] permutePath : nnArray) {
 			TSPSolver.bubbleSort(permutePath, nearestWatchPerson);
-			permutePath = TSPSolver.threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
+			quicker = new TSPSingle(evalMatrix, permutePath, nearestWatchPerson, lowEstimate);
+			//permutePath = TSPSolver.threadablePermuteFinding(evalMatrix, permutePath, lowEstimate, nearestWatchPerson);
+			permutePath = quicker.dynSolve();
 
 			/*
 			 * System.out.println("Approximation path: " +
