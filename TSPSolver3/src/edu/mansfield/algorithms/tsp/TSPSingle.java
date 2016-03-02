@@ -158,7 +158,7 @@ public class TSPSingle implements Runnable {
 
 		permuteSums[permuteSums.length - 1] = permuteSums[permuteSums.length - 2]
 				+ matrix[initialPermute[initialPermute.length - 1]][initialPermute[0]];
-		if (permuteSums[permuteSums.length - 1] < lowEstimate) {
+		if (permuteSums[permuteSums.length - 1] <= lowEstimate) {
 			bestArray = initialPermute.clone();
 			lowEstimate = permuteSums[permuteSums.length - 1];
 		}

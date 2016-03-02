@@ -58,7 +58,7 @@ public class TSPGinsu {
 			+ TSPSolver.threadablePermuteValue(startHere, start));
 			
 			System.out.println("Temp run time in milliseconds: " + tempRunTime);
-			if(currentEstimate>TSPSolver.threadablePermuteValue(shorterOne, start)){
+			if(currentEstimate>=TSPSolver.threadablePermuteValue(shorterOne, start)){
 				currentEstimate = TSPSolver.threadablePermuteValue(shorterOne, start);
 				shortest = shorterOne.clone();
 			}

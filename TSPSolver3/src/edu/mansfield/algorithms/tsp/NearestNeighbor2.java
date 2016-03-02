@@ -3,6 +3,35 @@ package edu.mansfield.algorithms.tsp;
 import java.util.Stack;
 
 public class NearestNeighbor2 {
+	
+	public int newNearestNeighborValue(int[][] matrix){
+		int estimate;
+		int lowest = Integer.MAX_VALUE;
+		int[][] paths = newNearestNeighborArray(matrix);
+		
+		for (int[] path : paths){
+			estimate = 0;
+			for (int i=0;i<path.length-1;i++){
+				estimate += matrix[path[i]][path[i+1]];
+			}
+			estimate += matrix[path[path.length - 1]][path[0]];
+			if (estimate < lowest){
+				lowest = estimate;
+			}
+		}
+		
+		return lowest;
+	}
+	
+	public int[][] newNearestNeighborArray(int[][] matrix){
+		int[][] results = new int[matrix[0].length][];
+		
+		for (int i=0;i<matrix[0].length;i++){
+			results[i] = newNearestNeighbor(matrix, i);
+		}
+		
+		return results;
+	}
 
 	public int[] newNearestNeighbor(int[][] matrix, int startCity) {
 		int[] reply = new int[matrix[0].length];

@@ -209,11 +209,24 @@ public class TSPSolver implements java.io.Serializable{
 
 	public static int lowEstimateEval(int[][] evalMatrix) {
 		NearestNeighbor2 nnSolver = new NearestNeighbor2();
-		lowEstimate = nnSolver.oldNearestNeighborRun(evalMatrix);
-		nnArray = nnSolver.oldNearestNeighborRunArray(evalMatrix);
+		lowEstimate = nnSolver.newNearestNeighborValue(evalMatrix);
+		//int otherEstimate = nnSolver.newNearestNeighborValue(evalMatrix);
+		nnArray = nnSolver.newNearestNeighborArray(evalMatrix);
+		//int[][] meArray = nnSolver.newNearestNeighborArray(evalMatrix);
+		/*
+		System.out.println("lowEstimate: " + lowEstimate);
+		System.out.println("otherEstimate: " + otherEstimate);
+		
+		for (int i=0;i<nnArray.length;i++){
+			System.out.println("nnArray: " + TSPSolver.MatrixLineToString(nnArray[i]) + "\tThis Distance:\t"
+					+ TSPSolver.threadablePermuteValue(nnArray[i], evalMatrix));
+			System.out.println("meArray: " + TSPSolver.MatrixLineToString(meArray[i]) + "\tThis Distance:\t"
+					+ TSPSolver.threadablePermuteValue(meArray[i], evalMatrix));
+		}*/
+		
 		//magic constant determined by informal testing.
 		if (nnArray[0].length > 17) {
-			nearestWatchPerson = nnArray[0].length - 11;
+			nearestWatchPerson = nnArray[0].length - 14;
 		} else {
 			nearestWatchPerson = nnArray[0].length / 2;
 		}
@@ -229,6 +242,7 @@ public class TSPSolver implements java.io.Serializable{
 			 */
 			if (TSPSolver.threadablePermuteValue(permutePath, evalMatrix) < lowEstimate) {
 				lowEstimate = TSPSolver.threadablePermuteValue(permutePath, evalMatrix);
+				System.out.println("good path: " + TSPSolver.MatrixLineToString(permutePath) + " dist: " + lowEstimate);
 			}
 		}
 		return lowEstimate;
