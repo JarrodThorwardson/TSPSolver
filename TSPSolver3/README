@@ -1,0 +1,17 @@
+This README offers a general overview of what this project entails. 
+
+Package list:
+
+
+edu.mansfield.algorithms.tsp:
+	*LexPermsOriginal
+	*NearestNeighbor2
+	*TSPSingle
+	*TSPSolver
+edu.mansfiled.algorithms.tsp.thor:
+	*MatrixGeneration
+	*TSPGinsu
+ExampleCode:
+	*Compute
+	*ComputeEngine
+	*Task
